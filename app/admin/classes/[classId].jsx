@@ -14,7 +14,7 @@ const ClassDetails = () => {
   useEffect(() => {
     const fetchClassDetails = async () => {
       try {
-        const response = await axios.get(`http://192.168.40.28:8080/api/classes/${classId}`);
+        const response = await axios.get(`http://192.168.100.240:1234/api/classes/${classId}`);
         setClassDetails(response.data);
       } catch (error) {
         console.error('Error fetching class details:', error);
@@ -26,7 +26,7 @@ const ClassDetails = () => {
 
   const onAddStudent = async (data) => {
     try {
-      const parentResponse = await axios.post('http://192.168.40.28:8080/api/parents', {
+      const parentResponse = await axios.post('http://192.168.100.240:1234/api/parents', {
         firstname: data.parentFirstname,
         lastname: data.parentLastname,
         email: data.parentEmail,
@@ -40,7 +40,7 @@ const ClassDetails = () => {
         relationToChild: data.relationToChild,
       });
 
-      const studentResponse = await axios.post('http://192.168.40.28:8080/api/students', {
+      const studentResponse = await axios.post('http://192.168.100.240:1234/api/students', {
         firstname: data.firstname,
         middlename: data.middlename,
         lastname: data.lastname,

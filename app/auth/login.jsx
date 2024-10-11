@@ -40,7 +40,7 @@ const Index = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://192.168.40.28:8080/auth/login', {
+      const response = await fetch('http://192.168.100.240:1234/auth/login', {
         method: 'POST',
         headers: {
           'accept': '*/*',
@@ -60,7 +60,7 @@ const Index = () => {
         await SecureStore.setItemAsync('role', JSON.stringify(result.role));
 
         // Alert.alert('Success', result.message);
-        router.push('/(admin)/');
+        router.push('/(teacher)/');
 
         if(result.role === 'ADMIN') {
           // Redirect to admin dashboard

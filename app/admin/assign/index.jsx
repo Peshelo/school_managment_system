@@ -73,7 +73,7 @@ const ManageTeacherSubjectClass = () => {
 
     try {
       const response = await axios.post(
-        'http://192.168.40.28:8080/api/teacher-subject-class',
+        'http://192.168.100.240:1234/api/teacher-subject-class',
         payload
       );
       Alert.alert('Success', 'Teacher-Subject-Class relationship created.');

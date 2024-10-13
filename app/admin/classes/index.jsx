@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
 import axios from 'axios';
-import TopNavBar from '@/components/navigation/TopNavBar';
 import * as SecureStore from 'expo-secure-store';
 import { Link } from 'expo-router';
 
@@ -25,7 +24,7 @@ const ManageClasses = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await axios.get('http://192.168.181.28:8080/api/classes');
+            const response = await axios.get('http://192.168.167.28:8080/api/classes');
             setClasses(response.data);
         } catch (error) {
             console.error('Error fetching classes:', error.response?.data || error.message);
@@ -55,7 +54,7 @@ const ManageClasses = () => {
                     id: newClass.schoolId
                 }
             };
-            await axios.post('http://192.168.181.28:8080/api/classes', data, {
+            await axios.post('http://192.168.167.28:8080/api/classes', data, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -72,7 +71,7 @@ const ManageClasses = () => {
 
     const handleDeleteClass = async (classId) => {
         try {
-            await axios.delete(`http://192.168.181.28:8080/api/classes/${classId}`, {
+            await axios.delete(`http://192.168.167.28:8080/api/classes/${classId}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -96,7 +95,7 @@ const ManageClasses = () => {
                     id: currentClass.schoolId
                 }
             };
-            await axios.put(`http://192.168.181.28:8080/api/classes/${currentClass.id}`, updatedClass, {
+            await axios.put(`http://192.168.167.28:8080/api/classes/${currentClass.id}`, updatedClass, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -113,12 +112,9 @@ const ManageClasses = () => {
 
     return (
         <View className="flex-1 bg-white">
-            <View className="p-4">
+            <View className="flex-1 p-4">
                 <Text className="text-xl font-bold mb-4">Manage Classes</Text>
 
-                <TouchableOpacity onPress={() => setModalVisible(true)} className="bg-green-500 p-3 rounded-md mb-4">
-                    <Text className="text-white text-center">Create New Class</Text>
-                </TouchableOpacity>
                 <View className="mb-4 flex-row">
                     <TextInput
                         className="border border-gray-300 p-2 rounded-md flex-1"
@@ -130,27 +126,27 @@ const ManageClasses = () => {
                         <Text className="text-white">Search</Text>
                     </TouchableOpacity>
                 </View>
-                <FlatList
-    data={classes}
-    keyExtractor={(item) => item.id.toString()}
-    renderItem={({ item }) => ( 
-        <Link href={`/admin/classes/7`} className="border-b border-gray-300 p-4 flex-row justify-between items-center">
-            <Text className="font-semibold">{item.name}</Text>
-            <Text className="text-xs text-gray-400">{item.description} This is a dummy description...</Text>
-            <View className="flex-row">
-                <TouchableOpacity onPress={() => { setCurrentClass(item); setModalVisible(true); }} className="p-2 rounded-md mr-2">
-                    <Text className="text-blue-500">Edit</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={() => handleDeleteClass(item.id)} className="p-2 rounded-md">
-                    <Text className="text-red-500">Delete</Text>
-                </TouchableOpacity>
-            </View>
-        </Link>
-    )}
-    contentContainerStyle={{ paddingBottom: 20 }} // Optional: adds padding at the bottom
-    showsVerticalScrollIndicator={false} // Optional: hides the scroll indicator
-/>
 
+                <FlatList
+                    data={classes}
+                    keyExtractor={(item) => item.id.toString()}
+                    renderItem={({ item }) => ( 
+                        <Link href={`/admin/classes/${item.id}`} className="border-b border-gray-300 p-4 flex-row justify-between items-center">
+                            <Text className="font-semibold">{item.name}</Text>
+                            <Text className="text-xs text-gray-400">{item.description} This is a dummy description...</Text>
+                            <View className="flex-row">
+                                <TouchableOpacity onPress={() => { setCurrentClass(item); setModalVisible(true); }} className="p-2 rounded-md mr-2">
+                                    <Text className="text-blue-500">Edit</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={() => handleDeleteClass(item.id)} className="p-2 rounded-md">
+                                    <Text className="text-red-500">Delete</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </Link>
+                    )}
+                    contentContainerStyle={{ paddingBottom: 80 }} // Adjust for the sticky button
+                    showsVerticalScrollIndicator={false}
+                />
 
                 {/* Modal for Adding/Editing Class */}
                 <Modal visible={modalVisible} animationType="slide">
@@ -185,6 +181,11 @@ const ManageClasses = () => {
                     </View>
                 </Modal>
             </View>
+
+            {/* Sticky Button at the Bottom */}
+            <TouchableOpacity onPress={() => setModalVisible(true)} className="bg-green-500 p-3 rounded-md mb-4 mx-4 absolute bottom-0 left-0 right-0">
+                <Text className="text-white text-center">Create New Class</Text>
+            </TouchableOpacity>
         </View>
     );
 };

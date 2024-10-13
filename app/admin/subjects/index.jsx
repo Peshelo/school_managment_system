@@ -18,7 +18,7 @@ const ManageSubjects = () => {
 
     const fetchSubjects = async () => {
         try {
-            const response = await axios.get('http://192.168.181.28:8080/api/subjects', {
+            const response = await axios.get('http://192.168.167.28:8080/api/subjects', {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -42,7 +42,7 @@ const ManageSubjects = () => {
 
     const handleCreateSubject = async () => {
         try {
-            await axios.post('http://192.168.181.28:8080/api/subjects', newSubject, {
+            await axios.post('http://192.168.167.28:8080/api/subjects', newSubject, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -59,7 +59,7 @@ const ManageSubjects = () => {
 
     const handleDeleteSubject = async (subjectId) => {
         try {
-            await axios.delete(`http://192.168.181.28:8080/api/subjects/${subjectId}`, {
+            await axios.delete(`http://192.168.167.28:8080/api/subjects/${subjectId}`, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -74,7 +74,7 @@ const ManageSubjects = () => {
 
     const handleEditSubject = async () => {
         try {
-            await axios.put(`http://192.168.181.28:8080/api/subjects/${currentSubject.id}`, currentSubject, {
+            await axios.put(`http://192.168.167.28:8080/api/subjects/${currentSubject.id}`, currentSubject, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, TextInput, Button, Image, TouchableOpacity, Alert } from 'react-native';
 import axios from 'axios';
 import TopNavBar from '@/components/navigation/TopNavBar';
+import { Stack } from 'expo-router';
 
 const ManageSchool = () => {
     const [schoolData, setSchoolData] = useState({
@@ -17,7 +18,7 @@ const ManageSchool = () => {
         // Fetch current school data
         const fetchSchoolData = async () => {
             try {
-                const response = await axios.get('http://192.168.181.28:8080/api/schools/1'); // Change to your actual school ID
+                const response = await axios.get('http://192.168.167.28:8080/api/schools/1'); // Change to your actual school ID
                 setSchoolData(response.data);
             } catch (error) {
                 console.error(error);
@@ -34,7 +35,7 @@ const ManageSchool = () => {
 
     const handleSubmit = async () => {
         try {
-            await axios.put('http://192.168.181.28:8080/api/schools/1', schoolData); // Change to your actual school ID
+            await axios.put('http://192.168.167.28:8080/api/schools/1', schoolData); // Change to your actual school ID
             Alert.alert('Success', 'School details updated successfully!');
         } catch (error) {
             console.error(error);

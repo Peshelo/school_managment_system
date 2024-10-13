@@ -1,108 +1,171 @@
+import { Stack } from 'expo-router';
 import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native';
+import { Colors } from '@/constants/Colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { Link, Stack } from 'expo-router';
-import { useRouter } from 'expo-router';
-import TopNavBar from '../../components/navigation/TopNavBar';
-import { Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
-const Index = () => {
-  const router = useRouter();
-
-  // Sample function for handling log out (placeholder)
-
-
+// StatsCard Component (You can further refactor this into a separate file if needed)
+const StatsCard = ({ title, value, icon, color }) => {
   return (
-    <>
-    <Stack.Screen options={{title:"Admin Dashboard"}}/>
-    <View className="flex-1 bg-gray-100">
-      {/* Top Nav Bar */}
-      {/* <TopNavBar/> */}
-      <View className="bg-white rounded-lg p-4 mb-4">
-          <Text className="text-2xl font-bold text-gray-800">Welcome, Admin!</Text>
-          <Text className="text-gray-600">Manage the school activities from the dashboard below.</Text>
-        </View>
-
-      {/* Main Content */}
-      <ScrollView className="flex-1 p-4">
-        {/* Welcome Section */}
-     
-
-        {/* Action Cards */}
-        <View className="flex-row flex-wrap justify-between">
-          {/* Card 1: Manage Students */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/school')}
-          >
-<FontAwesome5 name="school" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">School</Text>
-            <Text className="text-gray-600">Add, edit or view school details</Text>
-          </TouchableOpacity>
-
-          {/* Card 2: Manage Teachers */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/teachers')}
-          >
-<FontAwesome name="users" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Teachers</Text>
-            <Text className="text-gray-600">Add, edit or view teacher details</Text>
-          </TouchableOpacity>
-
-          {/* Card 3: Manage Classes */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/classes')}
-          >
-<MaterialCommunityIcons name="google-classroom" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Classes</Text>
-            <Text className="text-gray-600">View and organize classes</Text>
-          </TouchableOpacity>
-
-          {/* Card 4: Manage Attendance */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/parents')}
-          >
-<FontAwesome name="users" size={40} color="black" />
-<Text className="text-xl font-bold text-gray-800 mt-2">Parents</Text>
-            <Text className="text-gray-600">Manage Parent Accounts</Text>
-          </TouchableOpacity>
-
-          {/* Card 5: Manage Fees */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/subjects')}
-          >
-<Feather name="book-open" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Subjects</Text>
-            <Text className="text-gray-600">Track and manage school subjects</Text>
-          </TouchableOpacity>
-
-          {/* Card 6: School Settings */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/settings')}
-          >
-<Ionicons name="school" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Students</Text>
-            <Text className="text-gray-600">Manage School students</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/admin/assign')}
-          >
-<Ionicons name="school" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Assign</Text>
-            <Text className="text-gray-600">Assign Teachers to classes</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+    <View style={[styles.statsCard, { backgroundColor: color }]}>
+      <Icon name={icon} size={30} color="white" />
+      <Text style={styles.statsValue}>{value}</Text>
+      <Text style={styles.statsTitle}>{title}</Text>
     </View>
-    </>
   );
 };
+
+const Index = () => {
+  return (
+    <View style={styles.container}>
+      <Stack.Screen
+        options={{
+          title: "Dashboard",
+          headerStyle: {
+            backgroundColor: Colors.primary,
+          },
+          headerTintColor: '#fff',
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          headerShown: true,
+          headerRight: () => {
+            // My account button with icon
+            return (
+              <TouchableOpacity
+                onPress={() => router.push('/account')}
+                style={styles.headerButton}
+              >
+                <Icon name="user" size={20} color="white" />
+              </TouchableOpacity>
+            );
+          },
+        }}
+      />
+
+      {/* Search Section */}
+      <View style={styles.searchSection} className="border border-gray-400">
+        <TextInput
+          placeholder="Search..."
+          placeholderTextColor="#888"
+          style={styles.searchInput}
+          className=""
+        />
+        <TouchableOpacity style={styles.searchButton}>
+          <Icon name="search" size={20} color="white" />
+        </TouchableOpacity>
+      </View>
+
+      {/* General Statistics */}
+      <Text style={styles.sectionTitle}>General Statistics</Text>
+      <Text style={styles.sectionSubtitle}>View general statistics of the school</Text>
+
+      {/* Statistics Cards */}
+      <View style={styles.statsContainer}>
+        <StatsCard
+          title="Total Students"
+          value="1200"
+          icon="graduation-cap"
+          color={Colors.primary}
+        />
+        <StatsCard
+          title="Total Teachers"
+          value="85"
+          icon="users"
+          color={Colors.primary}
+        />
+        <StatsCard
+          title="Total Classes"
+          value="50"
+          icon="folder"
+          color={Colors.primary}
+        />
+        <StatsCard
+          title="Total Parents"
+          value="750"
+          icon="user"
+          color={Colors.primary}
+        />
+      </View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8F8F8',
+    padding: 16,
+  },
+  headerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  searchSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    marginBottom: 20,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+  },
+  searchButton: {
+    backgroundColor: Colors.primary,
+    padding: 10,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 16,
+    color: '#888',
+    marginBottom: 16,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  statsCard: {
+    width: '48%',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  statsValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: 'white',
+    marginTop: 10,
+  },
+  statsTitle: {
+    fontSize: 16,
+    color: 'white',
+    marginTop: 5,
+  },
+});
 
 export default Index;

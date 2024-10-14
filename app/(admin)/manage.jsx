@@ -3,7 +3,7 @@ import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { useRouter, Stack } from 'expo-router';
 import { Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Colors } from '../../constants/Colors';
+import { Colors } from '../../constants/Colors'; // Keep your Colors import if you still need it elsewhere
 
 const Index = () => {
   const router = useRouter();
@@ -11,13 +11,13 @@ const Index = () => {
   // Reusable Card Component
   const ActionCard = ({ title, description, icon, IconComponent, color, route }) => (
     <TouchableOpacity
-      className="w-[48%] p-4 rounded-md border border-gray-100 mb-4 shadow-lg"
+      className="w-[48%] p-4 rounded-md border border-gray-300 mb-4 shadow-md"
       onPress={() => router.navigate(route)}
       style={{ backgroundColor: color }}
     >
-      <IconComponent name={icon} size={40} color="white" />
-      <Text className="text-xl font-bold text-white mt-2">{title}</Text>
-      <Text className="text-white">{description}</Text>
+      <IconComponent name={icon} size={40} color="black" />
+      <Text className="text-lg font-bold text-black mt-2">{title}</Text>
+      <Text className="text-gray-700">{description}</Text>
     </TouchableOpacity>
   );
 
@@ -27,9 +27,9 @@ const Index = () => {
         options={{
           title: "Manage",
           headerStyle: {
-            backgroundColor: Colors.primary,
+            backgroundColor: Colors.gray, // Use a gray color for the header
           },
-          headerTintColor: '#fff',
+          headerTintColor: '#000', // Dark text for header
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -37,9 +37,9 @@ const Index = () => {
           headerRight: () => (
             <TouchableOpacity
               onPress={() => router.push('/account')}
-              className="flex-row items-center p-2 bg-white/10 mx-2 rounded-md px-4"
+              className="flex-row items-center p-2 bg-gray-300 mx-2 rounded-md"
             >
-              <Icon name="user" size={20} color="white" />
+              <Icon name="user" size={20} color="black" />
             </TouchableOpacity>
           ),
         }}
@@ -53,7 +53,7 @@ const Index = () => {
               description="Add, edit or view school details"
               icon="school"
               IconComponent={FontAwesome5}
-              color="#1E90FF"
+              color="#f5f5f5" // Light gray background
               route="/admin/school"
             />
 
@@ -63,7 +63,7 @@ const Index = () => {
               description="Add, edit or view teacher details"
               icon="users"
               IconComponent={FontAwesome}
-              color="#1E90FF"
+              color="#f5f5f5"
               route="/admin/teachers"
             />
 
@@ -73,7 +73,7 @@ const Index = () => {
               description="View and organize classes"
               icon="google-classroom"
               IconComponent={MaterialCommunityIcons}
-              color="#057091FF"
+              color="#f5f5f5"
               route="/admin/classes"
             />
 
@@ -83,7 +83,7 @@ const Index = () => {
               description="Manage Parent Accounts"
               icon="users"
               IconComponent={FontAwesome}
-              color="#057091FF"
+              color="#f5f5f5"
               route="/admin/parents"
             />
 
@@ -93,7 +93,7 @@ const Index = () => {
               description="Track and manage school subjects"
               icon="book-open"
               IconComponent={Feather}
-              color="#20B2AA"
+              color="#f5f5f5"
               route="/admin/subjects"
             />
 
@@ -103,7 +103,7 @@ const Index = () => {
               description="Manage School students"
               icon="school"
               IconComponent={Ionicons}
-              color="#20B2AA"
+              color="#f5f5f5"
               route="/settings"
             />
 
@@ -113,7 +113,7 @@ const Index = () => {
               description="Assign Teachers to classes"
               icon="school"
               IconComponent={Ionicons}
-              color="#4B11B6FF"
+              color="#f5f5f5"
               route="/admin/assign"
             />
           </View>
@@ -123,4 +123,4 @@ const Index = () => {
   );
 };
 
-export default Index;
+export default Index; 

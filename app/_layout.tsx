@@ -20,7 +20,12 @@ export default function RootLayout() {
          <Stack.Screen name="admin/subjects/index" options={{ title:"Manage Subjects"}} />
 
          <Stack.Screen name="admin/classes/index" options={{ title:"Manage Classes"}} />
+         <Stack.Screen name="admin/parents/index" options={{ title:"Manage Parents"}} />
 
+
+
+
+         <Stack.Screen name="(teacher)" options={{ title:"Teacher Portal"}} />
 
 
          <Stack.Screen name="+not-found" />

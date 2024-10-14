@@ -23,7 +23,7 @@ const ClassDetails = () => {
         setClassDetails(response.data);
 
         // Fetch students enrolled in the class
-        const studentsResponse = await axios.get(`http://192.168.167.28:8080/api/students?classId=${classId}`);
+        const studentsResponse = await axios.get(`http://192.168.43.230:8080/api/students?classId=${classId}`);
         setStudents(studentsResponse.data);
       } catch (error) {
         console.error('Error fetching class details:', error);

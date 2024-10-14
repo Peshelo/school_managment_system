@@ -32,7 +32,7 @@ const ManageTeachers = () => {
 
     const fetchTeachers = async () => {
         try {
-            const response = await axios.get('http://192.168.167.28:8080/api/teachers', {
+            const response = await axios.get('http://192.168.43.230:8080/api/teachers', {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -45,7 +45,7 @@ const ManageTeachers = () => {
 
     const handleCreateTeacher = async () => {
         try {
-            await axios.post('http://192.168.167.28:8080/api/teachers', newTeacher, {
+            await axios.post('http://192.168.43.230:8080/api/teachers', newTeacher, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -62,7 +62,7 @@ const ManageTeachers = () => {
 
     const handleDeleteTeacher = async (teacherId) => {
         try {
-            await axios.delete(`http://192.168.167.28:8080/api/teachers/${teacherId}`, {
+            await axios.delete(`http://192.168.43.230:8080/api/teachers/${teacherId}`, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }
@@ -77,7 +77,7 @@ const ManageTeachers = () => {
 
     const handleEditTeacher = async () => {
         try {
-            await axios.put(`http://192.168.167.28:8080/api/teachers/${currentTeacher.id}`, currentTeacher, {
+            await axios.put(`http://192.168.43.230:8080/api/teachers/${currentTeacher.id}`, currentTeacher, {
                 headers: {
                     "Authorization": `Bearer ${await token}`
                 }

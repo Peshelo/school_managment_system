@@ -24,7 +24,7 @@ const ManageClasses = () => {
 
     const fetchClasses = async () => {
         try {
-            const response = await axios.get('http://192.168.167.28:8080/api/classes');
+            const response = await axios.get('http://192.168.43.230:8080/api/classes');
             setClasses(response.data);
         } catch (error) {
             console.error('Error fetching classes:', error.response?.data || error.message);
@@ -54,7 +54,7 @@ const ManageClasses = () => {
                     id: newClass.schoolId
                 }
             };
-            await axios.post('http://192.168.167.28:8080/api/classes', data, {
+            await axios.post('http://192.168.43.230:8080/api/classes', data, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -71,7 +71,7 @@ const ManageClasses = () => {
 
     const handleDeleteClass = async (classId) => {
         try {
-            await axios.delete(`http://192.168.167.28:8080/api/classes/${classId}`, {
+            await axios.delete(`http://192.168.43.230:8080/api/classes/${classId}`, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }
@@ -95,7 +95,7 @@ const ManageClasses = () => {
                     id: currentClass.schoolId
                 }
             };
-            await axios.put(`http://192.168.167.28:8080/api/classes/${currentClass.id}`, updatedClass, {
+            await axios.put(`http://192.168.43.230:8080/api/classes/${currentClass.id}`, updatedClass, {
                 headers: {
                     "Authorization": `Bearer ${token}`
                 }

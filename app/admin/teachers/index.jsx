@@ -3,8 +3,8 @@ import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, Alert, Fla
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 import { Picker } from '@react-native-picker/picker'; // Importing the new Picker
-import TopNavBar from '@/components/navigation/TopNavBar';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../../../utils/apiClient';
+import BottomSheet from '@gorhom/bottom-sheet';
 
 const ManageTeachers = () => {
     const [teachers, setTeachers] = useState([]);
@@ -32,12 +32,8 @@ const ManageTeachers = () => {
 
     const fetchTeachers = async () => {
         try {
-            const response = await axios.get('http://192.168.43.230:8080/api/teachers', {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
-            setTeachers(response.data);
+            const response = await apiClient.getAuthorized('admin/teachers', await token);
+            setTeachers(response);
         } catch (error) {
             console.error(error);
         }
@@ -45,11 +41,7 @@ const ManageTeachers = () => {
 
     const handleCreateTeacher = async () => {
         try {
-            await axios.post('http://192.168.43.230:8080/api/teachers', newTeacher, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
+            await apiClient.post('admin/teachers', newTeacher, await token);
             Alert.alert('Success', 'Teacher created successfully!');
             fetchTeachers();
             setModalVisible(false);
@@ -60,13 +52,12 @@ const ManageTeachers = () => {
         }
     };
 
+
+
+
     const handleDeleteTeacher = async (teacherId) => {
         try {
-            await axios.delete(`http://192.168.43.230:8080/api/teachers/${teacherId}`, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
+            await apiClient.delete(`admin/teachers/${teacherId}`, await token);
             Alert.alert('Success', 'Teacher deleted successfully!');
             fetchTeachers();
         } catch (error) {
@@ -77,11 +68,7 @@ const ManageTeachers = () => {
 
     const handleEditTeacher = async () => {
         try {
-            await axios.put(`http://192.168.43.230:8080/api/teachers/${currentTeacher.id}`, currentTeacher, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
+            await apiClient.put(`admin/teachers/${currentTeacher.id}`, currentTeacher, await token);
             Alert.alert('Success', 'Teacher updated successfully!');
             fetchTeachers();
             setModalVisible(false);
@@ -104,8 +91,7 @@ const ManageTeachers = () => {
             mobileNumber: '',
             nationalId: '',
             dateOfBirth: '',
-            roles: ['TEACHER'],
-            school: { id: 1 },
+            roles: ['TEACHER']
         });
     };
 
@@ -126,7 +112,7 @@ const ManageTeachers = () => {
             </View>
         </View>
     );
-
+    const snapPoints = React.useMemo(() => ['25%', '50%'], []);
     return (
         <View className="flex-1 bg-white">
             <FlatList
@@ -229,6 +215,11 @@ const ManageTeachers = () => {
                     <Button className="my-2" title="Cancel" onPress={() => setModalVisible(false)} color="red" />
                 </View>
             </Modal>
+            <BottomSheet snapPoints={snapPoints}>
+                <View className="p-4">
+                    <Text>HJello</Text>
+                    </View>
+                </BottomSheet>
         </View>
     );
 };

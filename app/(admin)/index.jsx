@@ -1,11 +1,14 @@
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, TextInput } from 'react-native';
 import { Colors } from '@/constants/Colors';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import { Image } from 'react-native';
+
 
 // StatsCard Component (You can further refactor this into a separate file if needed)
 const StatsCard = ({ title, value, icon, color }) => {
+  const router = useRouter();
   return (
     <View style={[styles.statsCard, { backgroundColor: color }]}>
       <Icon name={icon} size={30} color="white" />
@@ -22,9 +25,9 @@ const Index = () => {
         options={{
           title: "Dashboard",
           headerStyle: {
-            backgroundColor: Colors.primary,
+            backgroundColor: 'white',
           },
-          headerTintColor: '#fff',
+          headerTintColor: 'black',
           headerTitleStyle: {
             fontWeight: 'bold',
           },
@@ -34,9 +37,8 @@ const Index = () => {
             return (
               <TouchableOpacity
                 onPress={() => router.push('/account')}
-                style={styles.headerButton}
               >
-                <Icon name="user" size={20} color="white" />
+                <Image source={require('../../assets/images/logo.png')} className="w-[50px] h-[50px] round object-contain p-4" width={20} height={20}  />
               </TouchableOpacity>
             );
           },

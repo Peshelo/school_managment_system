@@ -15,7 +15,7 @@ const Index = () => {
       onPress={() => router.navigate(route)}
       style={{ backgroundColor: color }}
     >
-      <IconComponent name={icon} size={40} color="black" />
+      <IconComponent name={icon} size={29} color="black" />
       <Text className="text-lg font-bold text-black mt-2">{title}</Text>
       <Text className="text-gray-700">{description}</Text>
     </TouchableOpacity>

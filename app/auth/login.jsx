@@ -1,17 +1,17 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
 import { Link, Stack, useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as SecureStore from 'expo-secure-store';
 
 const Index = () => {
-  const [email, setEmail] = useState('gomopeshel@gmail.com');
-  const [password, setPassword] = useState('1212');
+  const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
+  const [email, setEmail] = useState('admin@gmail.com');
+  const [password, setPassword] = useState('admin');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
-  const router = useRouter(); // Initialize router
-
+  const router = useRouter();
 
   const validateInputs = () => {
     let isValid = true;
@@ -40,7 +40,8 @@ const Index = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://192.168.100.240:1234/auth/login', {
+      console.log(`${BASE_URL}/auth/login`);
+      const response = await fetch(`${BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'accept': '*/*',
@@ -59,12 +60,11 @@ const Index = () => {
         await SecureStore.setItemAsync('token', result.token);
         await SecureStore.setItemAsync('role', JSON.stringify(result.role));
 
-        // Alert.alert('Success', result.message);
-        router.push('/(teacher)/');
-
-        if(result.role === 'ADMIN') {
-          // Redirect to admin dashboard
-          // navigation.navigate('AdminDashboard');
+        if(result.role[0] === 'ADMIN') {
+          router.replace('/(admin)/');
+        }
+        if(result.role[0] === 'TEACHER') {
+          router.replace('/(teacher)/');
         }
       } else {
         Alert.alert('Login Failed', result.message || 'Something went wrong');
@@ -78,15 +78,16 @@ const Index = () => {
   };
 
   return (
-    <View className="flex-1 bg-white">
+    <View className="flex-1 bg-white flex flex-col w-full justify-center items-center">
       <Stack.Screen options={{title:"Login",headerShown:false}} />
       {/* Header */}
-      <View className="bg-gray-800 h-[200px] justify-center px-5 pt-10">
-        <Text className="text-white text-4xl font-bold">Sign in to your account</Text>
+      <View className="h-fit flex flex-col justify-center items-center p-4 w-full px-5 pt-10">
+        <Image source={require('../../assets/images/logo.png')} className="w-[200px] h-[200px] object-contain p-4" width={20} height={20}  />
+        <Text className="text-black text-xl font-bold">Sign in to your account</Text>
       </View>
 
       {/* Form Section */}
-      <View className="p-5">
+      <View className="p-5 w-full">
         {/* Email Input */}
         <View className="mb-4">
           <View
@@ -98,9 +99,9 @@ const Index = () => {
             <TextInput
               onChangeText={(text) => {
                 setEmail(text);
-                setEmailError(''); // Reset error on input change
+                setEmailError('');
               }}
-              onFocus={() => setEmailError('')} // Remove error on focus
+              onFocus={() => setEmailError('')}
               value={email}
               className="ml-3 flex-1 text-base"
               placeholder="Email"
@@ -122,9 +123,9 @@ const Index = () => {
             <TextInput
               onChangeText={(text) => {
                 setPassword(text);
-                setPasswordError(''); // Reset error on input change
+                setPasswordError('');
               }}
-              onFocus={() => setPasswordError('')} // Remove error on focus
+              onFocus={() => setPasswordError('')}
               value={password}
               className="ml-3 flex-1 text-base"
               placeholder="Password"

@@ -4,7 +4,7 @@ import React from 'react';
 import { TabBarIcon } from '@/components/navigation/TabBarIcon';
 import { Colors } from '@/constants/Colors';
 import { useColorScheme } from '@/hooks/useColorScheme';
-import { FontAwesome6, Ionicons, MaterialCommunityIcons, MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome6, Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -24,7 +24,7 @@ export default function TabLayout() {
         }}
       />
        <Tabs.Screen
-        name="manage"
+        name="account"
         options={{
             headerShown: false,
           title: 'Manage',
@@ -46,15 +46,33 @@ export default function TabLayout() {
         }}
       />
        <Tabs.Screen
-        name="account"
+        name="settings"
         options={{
             headerShown: false,
-          title: 'Account',
+          title: 'Settings',
           tabBarIcon: ({ color, focused }) => (
-<MaterialCommunityIcons name="account" size={24} color={color} />        ),
+<MaterialIcons name="settings" size={24} color={color} />          ),
         }}
       />
-
+       {/* <Tabs.Screen
+        name="ManageSchool"
+        options={{
+            headerShown: false,
+          title: 'Manage School',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'home' : 'home-outline'} color={color} />
+          ),
+        }}
+      /> */}
+      {/* <Tabs.Screen
+        name="explore"
+        options={{
+          title: 'Explore',
+          tabBarIcon: ({ color, focused }) => (
+            <TabBarIcon name={focused ? 'code-slash' : 'code-slash-outline'} color={color} />
+          ),
+        }}
+      /> */}
     </Tabs>
   );
 }

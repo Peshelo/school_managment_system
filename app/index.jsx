@@ -5,6 +5,8 @@ import { StyleSheet, View,Text, SafeAreaView } from 'react-native';
 const Index = () => {
     return (
       <Redirect href={'/auth/login'} />
+      // <Redirect href={'/(parent)'} />
+
 
     );
 }

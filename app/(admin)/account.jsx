@@ -22,6 +22,7 @@ const App = () => {
       snapPoints={snapPoints}
     //   Close button
       handleIndicator={true}
+      enablePanDownToClose={true}
     //   ref={bottomSheetRef}
         // ref={bottomSheetRef}
         onChange={handleSheetChanges}

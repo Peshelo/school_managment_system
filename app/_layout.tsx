@@ -26,6 +26,15 @@ export default function RootLayout() {
 
 
          <Stack.Screen name="(teacher)" options={{ title:"Teacher Portal"}} />
+         {/* <Stack.Screen name="(parent)" options={{ title:"Parent Portal"}} /> */}
+
+
+         <Stack.Screen name="parent/children/[id]" options={{headerShown:true}} />
+         <Stack.Screen name="(parent)" options={{headerShown:false}} />
+
+
+
+
 
 
          <Stack.Screen name="+not-found" />

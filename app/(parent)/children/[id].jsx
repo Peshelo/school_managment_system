@@ -3,6 +3,8 @@ import { Link, Stack, useLocalSearchParams } from 'expo-router';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+import { useEffect, useState } from 'react';
+import apiClient from '../../../utils/apiClient';
 
 // Dynamic icons based on subject
 const getIconForSubject = (subject) => {
@@ -28,7 +30,6 @@ const Excercise = ({ title, grade, subject, score }) => {
         <View className="flex flex-col">
           <Text className="text-lg text-gray-800">{title}</Text>
           <Text className="text-sm text-gray-500">{subject}</Text>
-
         </View>
       </View>
       {/* if score is less than 50 put red style else put green */}
@@ -39,10 +40,25 @@ const Excercise = ({ title, grade, subject, score }) => {
 };
 
 const Id = () => {
-  const param = useLocalSearchParams();
+  const {id} = useLocalSearchParams();
+  const [student, setStudent] = useState(null); // Initialize as null to handle loading state
+
+  const fetchStudent = async () => {
+      try{
+          const response = await apiClient.get(`students/${id}`);
+          setStudent(response);
+          console.log(response);
+      }catch(error){
+          console.error(error);
+      }
+  }
+
+  useEffect(() => {
+      fetchStudent();
+  },[id]);
 
   return (
-    <View className="bg-slate-900 flex-1">
+    <View className="flex-1">
       {/* Stack header */}
       <Stack.Screen options={{ title: 'Child Profile' ,
       headerBackVisible: false,
@@ -50,10 +66,9 @@ const Id = () => {
       }} />
       
       {/* Student Info */}
-      <View className="p-4 flex-auto  text-white">
-        <Text className="text-3xl font-bold text-white">Kundai Ka</Text>
-        <Text className="text-md font-semibold text-white">Class 1A</Text>
-        <Text className="text-md font-semibold text-white">Grade: 1</Text>
+      <View className="p-4 flex-auto ">
+        <Text className="text-3xl font-bold ">Name: {student?.firstname} {student?.lastname}</Text>
+        <Link href={'/admin/subjects'} className="text-md font-semibold">Class {student?.assignedClass?.name}</Link>
       </View>
 
       {/* Exercises Section */}

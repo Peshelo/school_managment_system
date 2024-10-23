@@ -1,197 +1,226 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import { Link } from 'expo-router';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../../../utils/apiClient';
+import { Stack, useRouter } from 'expo-router';
+import { useActionSheet } from '@expo/react-native-action-sheet';
+
 
 const ManageClasses = () => {
     const [classes, setClasses] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [currentClass, setCurrentClass] = useState(null);
-    const [newClass, setNewClass] = useState({ name: '', description: '', academicYearId: 1, schoolId: 1 });
-    const [token, setToken] = useState(null);
+    const router = useRouter();
+    const [newClass, setNewClass] = useState({
+        name: '',
+        description: '',
+        academicYearId: 1,
+        schoolId: 1
+    });
+    const { showActionSheetWithOptions } = useActionSheet();
+
 
     useEffect(() => {
-        const getToken = async () => {
-            const retrievedToken = await SecureStore.getItemAsync('token');
-            setToken(retrievedToken);
-        };
-        
-        getToken();
         fetchClasses();
     }, []);
 
     const fetchClasses = async () => {
-        try {
-            const response = await axios.get('http://192.168.43.230:8080/api/classes');
-            setClasses(response.data);
-        } catch (error) {
-            console.error('Error fetching classes:', error.response?.data || error.message);
-        }
-    };
+        const token = await SecureStore.getItemAsync('token');
 
-    const handleSearch = () => {
-        if (searchTerm) {
-            const filteredClasses = classes.filter(cls =>
-                cls.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setClasses(filteredClasses);
-        } else {
-            fetchClasses(); // Reset to original list if search term is cleared
-        }
-    };
-
-    const handleCreateClass = async () => {
         try {
-            const data = {
-                name: newClass.name,
-                description: newClass.description,
-                academicYear: {
-                    id: newClass.academicYearId
-                },
-                school: {
-                    id: newClass.schoolId
-                }
-            };
-            await axios.post('http://192.168.43.230:8080/api/classes', data, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            Alert.alert('Success', 'Class created successfully!');
-            fetchClasses();
-            setModalVisible(false);
-            setNewClass({ name: '', description: '', academicYearId: 1, schoolId: 1 });
+            const response = await apiClient.getAuthorized('classes', token);
+            setClasses(response);
         } catch (error) {
-            console.error('Error creating class:', error.response?.data || error.message);
-            Alert.alert('Error', 'Failed to create class.');
+            console.error(error);
         }
     };
 
     const handleDeleteClass = async (classId) => {
+        const token = await SecureStore.getItemAsync('token');
+
         try {
-            await axios.delete(`http://192.168.43.230:8080/api/classes/${classId}`, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
+            await apiClient.delete(`classes/${classId}`, token);
             Alert.alert('Success', 'Class deleted successfully!');
             fetchClasses();
         } catch (error) {
-            console.error('Error deleting class:', error.response?.data || error.message);
+            console.error(error);
             Alert.alert('Error', 'Failed to delete class.');
         }
     };
 
-    const handleEditClass = async () => {
+    const handleCreateClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
         try {
-            const updatedClass = {
-                ...currentClass,
-                academicYear: {
-                    id: currentClass.academicYearId
-                },
-                school: {
-                    id: currentClass.schoolId
-                }
-            };
-            await axios.put(`http://192.168.43.230:8080/api/classes/${currentClass.id}`, updatedClass, {
-                headers: {
-                    "Authorization": `Bearer ${token}`
-                }
-            });
-            Alert.alert('Success', 'Class updated successfully!');
+            await apiClient.post('classes', newClass, token);
+            Alert.alert('Success', 'Class created successfully!');
             fetchClasses();
             setModalVisible(false);
-            setCurrentClass(null);
+            resetForm();
         } catch (error) {
-            console.error('Error updating class:', error.response?.data || error.message);
-            Alert.alert('Error', 'Failed to update class.');
+            console.error(error);
+            Alert.alert('Error', 'Failed to create class.');
         }
+    };
+
+    const resetForm = () => {
+        setNewClass({
+            name: '',
+            description: '',
+            academicYearId: 1,
+            schoolId: 1
+        });
+    };
+
+    const renderClassItem = ({ item }) => (
+        <TouchableOpacity onPress={() => console.log("Open Class Profile")} className="border-b border-gray-300 mx-1 rounded-md p-4 flex-row items-center">
+            <View className="flex-1">
+                <Text className="font-bold">{item.name}</Text>
+                <Text>{item.description}</Text>
+            </View>
+            <TouchableOpacity onPress={() => openActionSheet(item)} className="flex-row">
+                <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
+            </TouchableOpacity>
+        </TouchableOpacity>
+    );
+
+    const openActionSheet = (classItem) => {
+        setCurrentClass(classItem);
+        const options = ['View', 'Edit', 'Delete', 'Cancel'];
+        const destructiveButtonIndex = 2;
+        const cancelButtonIndex = 3;
+
+        showActionSheetWithOptions({
+            options,
+            title: 'Class Actions',
+            destructiveButtonIndex,
+            cancelButtonIndex,
+        },
+        (buttonIndex) => {
+            if (buttonIndex === 0) {
+                router.push(`/admin/classes/${classItem.id}`);
+            }
+            if (buttonIndex === 1) {
+                setCurrentClass(classItem);
+                setModalVisible(true);
+            }
+            if (buttonIndex === 2) {
+                handleDeleteClass(classItem.id);
+            }
+        });
     };
 
     return (
         <View className="flex-1 bg-white">
-            <View className="flex-1 p-4">
-                <Text className="text-xl font-bold mb-4">Manage Classes</Text>
-
-                <View className="mb-4 flex-row">
-                    <TextInput
-                        className="border border-gray-300 p-2 rounded-md flex-1"
-                        placeholder="Search Classes"
-                        value={searchTerm}
-                        onChangeText={setSearchTerm}
-                    />
-                    <TouchableOpacity onPress={handleSearch} className="ml-2 bg-gray-700 p-2 rounded-md">
-                        <Text className="text-white">Search</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <FlatList
-                    data={classes}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => ( 
-                        <Link href={`/admin/classes/${item.id}`} className="border-b border-gray-300 p-4 flex-row justify-between items-center">
-                            <Text className="font-semibold">{item.name}</Text>
-                            <Text className="text-xs text-gray-400">{item.description} This is a dummy description...</Text>
-                            <View className="flex-row">
-                                <TouchableOpacity onPress={() => { setCurrentClass(item); setModalVisible(true); }} className="p-2 rounded-md mr-2">
-                                    <Text className="text-blue-500">Edit</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDeleteClass(item.id)} className="p-2 rounded-md">
-                                    <Text className="text-red-500">Delete</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </Link>
-                    )}
-                    contentContainerStyle={{ paddingBottom: 80 }} // Adjust for the sticky button
-                    showsVerticalScrollIndicator={false}
-                />
-
-                {/* Modal for Adding/Editing Class */}
-                <Modal visible={modalVisible} animationType="slide">
-                    <View className="p-4">
-                        <Text className="text-xl font-bold mb-4 text-center">
-                            {currentClass ? 'Edit Class' : 'Create Class'}
-                        </Text>
-
-                        <TextInput
-                            className="border border-gray-300 p-2 mb-4 rounded-md"
-                            placeholder="Class Name"
-                            value={currentClass ? currentClass.name : newClass.name}
-                            onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, name: text }) : setNewClass({ ...newClass, name: text })}
-                        />
-                        <TextInput
-                            className="border border-gray-300 p-2 mb-4 rounded-md"
-                            placeholder="Description"
-                            value={currentClass ? currentClass.description : newClass.description}
-                            onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, description: text }) : setNewClass({ ...newClass, description: text })}
-                        />
-
-                        <TouchableOpacity
-                            onPress={currentClass ? handleEditClass : handleCreateClass}
-                            className="bg-gray-700 p-3 rounded-md mb-4"
-                        >
-                            <Text className="text-white text-center">{currentClass ? 'Update Class' : 'Create Class'}</Text>
+            <Stack.Screen
+                options={{
+                    title: "Manage Classes",
+                    headerBackVisible: false,
+                    headerRight: () => (
+                        <TouchableOpacity onPress={() => setModalVisible(true)} className="p-2 rounded-md">
+                            <MaterialCommunityIcons name="plus-box" size={24} color="white" />
                         </TouchableOpacity>
+                    ),
+                }}
+            />
 
-                        <TouchableOpacity onPress={() => setModalVisible(false)} className="bg-red-500 p-3 rounded-md">
-                            <Text className="text-white text-center">Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Modal>
-            </View>
+            <FlatList
+                data={classes}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderClassItem}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                showsVerticalScrollIndicator={false}
+            />
 
-            {/* Sticky Button at the Bottom */}
-            <TouchableOpacity onPress={() => setModalVisible(true)} className="bg-green-500 p-3 rounded-md mb-4 mx-4 absolute bottom-0 left-0 right-0">
-                <Text className="text-white text-center">Create New Class</Text>
-            </TouchableOpacity>
+            {/* Modal for Adding/Editing Class */}
+            <AddClassModal
+                visible={modalVisible}
+                onClose={() => { setCurrentClass(null); setModalVisible(false); }}
+                currentClass={currentClass}
+                setCurrentClass={(values) => setCurrentClass(values)}
+                refresh={fetchClasses}
+            />
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    // Add any custom styles here
-});
+const AddClassModal = ({ visible, onClose, currentClass, setCurrentClass, refresh }) => {
+
+    const handleEditClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.put(`classes/${currentClass.id}`, currentClass, token);
+            Alert.alert('Success', 'Class updated successfully!');
+            refresh();
+            onClose();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to update class.');
+        }
+    };
+
+    const [newClass, setNewClass] = useState({
+        name: '',
+        description: '',
+        academicYearId: 1,
+        schoolId: 1,
+    });
+
+    const handleCreateClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.post('classes', newClass, token);
+            Alert.alert('Success', 'Class created successfully!');
+            refresh();
+            onClose();
+            resetForm();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create class.');
+        }
+    };
+
+    const resetForm = () => {
+        setNewClass({
+            name: '',
+            description: '',
+            academicYearId: 1,
+            schoolId: 1,
+        });
+    };
+
+    return (
+        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+            <View className="flex flex-row justify-between p-4 items-center">
+                <Text className="text-xl font-bold text-center">{currentClass ? 'Edit Class' : 'Create Class'}</Text>
+                <TouchableOpacity className="text-center" onPress={onClose}>
+                    <MaterialCommunityIcons name="close" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <View className="p-4">
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Class Name"
+                    value={currentClass ? currentClass.name : newClass.name}
+                    onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, name: text }) : setNewClass({ ...newClass, name: text })}
+                />
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Class Description"
+                    value={currentClass ? currentClass.description : newClass.description}
+                    onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, description: text }) : setNewClass({ ...newClass, description: text })}
+                />
+                <TouchableOpacity className="my-2 w-full bg-blue-500 rounded-lg p-4" onPress={currentClass ? handleEditClass : handleCreateClass}>
+                    <Text className="w-full text-center text-semibold text-white">{currentClass ? 'Update Class' : 'Create Class'}</Text>
+                </TouchableOpacity>
+            </View>
+        </Modal>
+    );
+};
 
 export default ManageClasses;

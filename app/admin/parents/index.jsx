@@ -1,11 +1,129 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, TextInput, Button, Modal, StyleSheet } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, Alert, TextInput, Modal, StyleSheet } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import DateTimePicker from '@react-native-community/datetimepicker'; // Import the datetime picker
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useActionSheet } from '@expo/react-native-action-sheet';
+import { Stack, useRouter } from 'expo-router';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import apiClient from '../../../utils/apiClient';
+// Create an API client
 
 const ParentManagement = () => {
   const [parents, setParents] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentParent, setCurrentParent] = useState(null);
+  const router = useRouter();
+  const token = SecureStore.getItemAsync('token');
+
+  const { showActionSheetWithOptions } = useActionSheet();
+
+  const openActionSheet = (parent) => {
+    setCurrentParent(parent);
+    const options = ['View', 'Edit', 'Delete','Assign Child', 'Cancel'];
+    const destructiveButtonIndex = 2;
+    const cancelButtonIndex = 3;
+
+    showActionSheetWithOptions({
+      options,
+      title: 'Parent Actions',
+      separatorStyle: {
+        color: 'gray',
+      },
+      useModal: true,
+      message: 'Select an action to perform on the parent',
+      showSeparators: true,
+      destructiveButtonIndex,
+      cancelButtonIndex,
+    },
+      (buttonIndex) => {
+        if (buttonIndex === 0) {
+          // Navigate to Parent Profile (Replace with actual profile route)
+          router.push(`/admin/parents/${parent.id}`);
+        }
+        if (buttonIndex === 1) {
+          setModalVisible(true);
+        }
+        if (buttonIndex === 2) {
+          handleDeleteParent(parent.id);
+        }
+      });
+  };
+
+  const fetchParents = async () => {
+    const token = await SecureStore.getItemAsync('token');
+    try {
+      const response = await apiClient.get('parents');
+      setParents(response);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchParents();
+  }, []);
+
+  const handleDeleteParent = async (parentId) => {
+    const token = await SecureStore.getItemAsync('token');
+    try {
+      await apiClient.delete(`admin/parents/${parentId}`,token);
+      Alert.alert('Success', 'Parent deleted successfully!');
+      fetchParents();
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to delete parent.');
+    }
+  };
+
+  const renderParentItem = ({ item }) => (
+    <TouchableOpacity onPress={() => console.log("Open Parent Profile")} className="border-b border-gray-300 mx-1 rounded-md p-4 flex-row items-center">
+      <View className="flex-1">
+        <Text className="font-bold">{item.firstname} {item.lastname}</Text>
+        <Text>{item.email}</Text>
+      </View>
+      <TouchableOpacity onPress={() => openActionSheet(item)} className="flex-row">
+        <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
+      </TouchableOpacity>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View className="flex-1 bg-white">
+      <Stack.Screen
+        options={{
+          title: "Manage Parents",
+          headerBackVisible: false,
+          headerRight: () => (
+            <TouchableOpacity onPress={() => setModalVisible(true)} className="p-2 rounded-md">
+              <MaterialCommunityIcons name="account-plus" size={24} color="white" />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+      <FlatList
+        data={parents}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderParentItem}
+        contentContainerStyle={{ paddingBottom: 80 }} // Add padding for fixed button space
+        showsVerticalScrollIndicator={false} // Hides the scroll indicator
+      />
+
+      {/* Modal for Adding/Editing Parent */}
+      <AddParentModal 
+        visible={modalVisible} 
+        onClose={() => { setCurrentParent(null); setModalVisible(false); }} 
+        currentParent={currentParent} 
+        setCurrentParent={setCurrentParent} 
+        refresh={fetchParents} 
+      />
+    </View>
+  );
+};
+
+const AddParentModal = ({ visible, onClose, currentParent, setCurrentParent, refresh }) => {
+ 
+
   const [newParent, setNewParent] = useState({
     firstname: '',
     lastname: '',
@@ -16,85 +134,38 @@ const ParentManagement = () => {
     gender: 'MALE',
     mobileNumber: '',
     nationalId: '',
-    dateOfBirth: new Date(), // Default to the current date
+    dateOfBirth: '',
     relationToChild: 'FATHER',
+    roles:['PARENT']
   });
-  const [isAdding, setIsAdding] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editParentId, setEditParentId] = useState(null);
-  const [showDatePicker, setShowDatePicker] = useState(false); // State to control the date picker visibility
+  
+  // State for date picker
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
-  useEffect(() => {
-    fetchParents();
-  }, []);
-
-  const fetchParents = async () => {
+  const handleEditParent = async () => {
     const token = await SecureStore.getItemAsync('token');
     try {
-      const response = await axios.get('http://192.168.43.230:8080/api/parents', {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setParents(response.data);
+      await apiClient.put(`/admin/parents/${currentParent.id}`, currentParent, token);
+      Alert.alert('Success', 'Parent updated successfully!');
+      refresh();
+      onClose();
     } catch (error) {
-      console.error('Error fetching parents:', error);
+      console.error(error);
+      Alert.alert('Error', 'Failed to update parent.');
     }
   };
 
-  const addParent = async () => {
+  const handleCreateParent = async () => {
     const token = await SecureStore.getItemAsync('token');
-
     try {
-      const response = await axios.post('http://192.168.43.230:8080/api/parents', newParent, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setParents([...parents, response.data]);
-      Alert.alert('Success', 'Parent added successfully');
+      await apiClient.post('parents', newParent,token);
+      Alert.alert('Success', 'Parent created successfully!');
+      refresh();
+      onClose();
       resetForm();
     } catch (error) {
-      console.error('Error adding parent:', error);
-      Alert.alert('Error', 'Failed to add parent');
-    }
-  };
-
-  const editParent = async () => {
-    const token = await SecureStore.getItemAsync('token');
-
-    try {
-      const response = await axios.put(`http://192.168.43.230:8080/api/parents/${editParentId}`, newParent, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setParents(parents.map(parent => (parent.id === editParentId ? response.data : parent)));
-      Alert.alert('Success', 'Parent details updated successfully');
-      resetForm();
-    } catch (error) {
-      console.error('Error editing parent:', error);
-      Alert.alert('Error', 'Failed to edit parent');
-    }
-  };
-
-  const deleteParent = async (id) => {
-    const token = await SecureStore.getItemAsync('token');
-
-    try {
-      await axios.delete(`http://192.168.43.230:8080/api/parents/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setParents(parents.filter(parent => parent.id !== id));
-      Alert.alert('Success', 'Parent deleted successfully');
-    } catch (error) {
-      console.error('Error deleting parent:', error);
-      Alert.alert('Error', 'Failed to delete parent');
+      console.error(error);
+      Alert.alert('Error', 'Failed to create parent.');
     }
   };
 
@@ -109,161 +180,108 @@ const ParentManagement = () => {
       gender: 'MALE',
       mobileNumber: '',
       nationalId: '',
-      dateOfBirth: new Date(), // Reset date to current date
+      dateOfBirth: '',
       relationToChild: 'FATHER',
     });
-    setIsAdding(false);
-    setIsEditing(false);
-    setEditParentId(null);
-    setShowDatePicker(false); // Hide date picker on reset
   };
 
-  const openEditModal = (parent) => {
-    setNewParent(parent);
-    setEditParentId(parent.id);
-    setIsEditing(true);
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || new Date();
+    setShowDatePicker(false);
+    if (currentParent) {
+      setCurrentParent({ ...currentParent, dateOfBirth: currentDate.toISOString().split('T')[0] });
+    } else {
+      setNewParent({ ...newParent, dateOfBirth: currentDate.toISOString().split('T')[0] });
+    }
   };
-
-  const renderParent = ({ item }) => (
-    <View className="p-4 border border-gray-300 rounded mb-2 bg-white">
-      <Text className="text-lg font-bold">{item.firstname} {item.lastname}</Text>
-      <Text className="text-gray-600">{item.email}</Text>
-      <View className="flex-row justify-between mt-2">
-        <TouchableOpacity 
-          className="bg-blue-500 text-white px-3 py-1 rounded" 
-          onPress={() => openEditModal(item)}
-        >
-          <Text className="text-white">Edit</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          className="bg-red-500 text-white px-3 py-1 rounded" 
-          onPress={() => deleteParent(item.id)}
-        >
-          <Text className="text-white">Delete</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
 
   return (
-    <View className="flex-1 p-4 bg-gray-100">
-      <Text className="text-2xl font-bold mb-4">Manage Parents</Text>
+    <Modal visible={visible} animationType="slide" presentationStyle='pageSheet'>
+      <View className="flex flex-row justify-between p-4 items-center">
+        <Text className="text-xl font-bold text-center">
+          {currentParent ? 'Edit Parent' : 'Create Parent'}
+        </Text>
+        <TouchableOpacity className="text-center" onPress={onClose}>
+          <MaterialCommunityIcons name="close" size={24} color="black" />
+        </TouchableOpacity>
+      </View>
+      <View className="p-4">
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="First Name"
+          value={currentParent ? currentParent.firstname : newParent.firstname}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, firstname: text }) : setNewParent({ ...newParent, firstname: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Last Name"
+          value={currentParent ? currentParent.lastname : newParent.lastname}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, lastname: text }) : setNewParent({ ...newParent, lastname: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Email"
+          value={currentParent ? currentParent.email : newParent.email}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, email: text }) : setNewParent({ ...newParent, email: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Address"
+          value={currentParent ? currentParent.address : newParent.address}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, address: text }) : setNewParent({ ...newParent, address: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Username"
+          value={currentParent ? currentParent.username : newParent.username}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, username: text }) : setNewParent({ ...newParent, username: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Password"
+          value={currentParent ? currentParent.password : newParent.password}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, password: text }) : setNewParent({ ...newParent, password: text })}
+          secureTextEntry
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="Mobile Number"
+          value={currentParent ? currentParent.mobileNumber : newParent.mobileNumber}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, mobileNumber: text }) : setNewParent({ ...newParent, mobileNumber: text })}
+        />
+        <TextInput
+          className="border border-gray-300 p-2 mb-2 rounded-md"
+          placeholder="National ID"
+          value={currentParent ? currentParent.nationalId : newParent.nationalId}
+          onChangeText={(text) => currentParent ? setCurrentParent({ ...currentParent, nationalId: text }) : setNewParent({ ...newParent, nationalId: text })}
+        />
 
-      <Button title="Add New Parent" onPress={() => setIsAdding(true)} />
+        {/* Date of Birth Picker */}
+        <TouchableOpacity onPress={() => setShowDatePicker(true)} className="border border-gray-300 p-2 mb-2 rounded-md">
+          <Text>{currentParent ? currentParent.dateOfBirth : newParent.dateOfBirth || 'Select Date of Birth'}</Text>
+        </TouchableOpacity>
+        {showDatePicker && (
+          <DateTimePicker
+            value={currentParent ? new Date(currentParent.dateOfBirth) : new Date()}
+            mode="date"
+            display="default"
+            onChange={onDateChange}
+          />
+        )}
 
-      <FlatList
-        data={parents}
-        renderItem={renderParent}
-        keyExtractor={(item) => item.id.toString()}
-        className="mt-4"
-      />
-
-      {/* Bottom Sheet Modal for Adding New Parent */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isAdding || isEditing}
-        onRequestClose={() => resetForm()}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Text className="text-lg font-semibold mb-2">{isEditing ? 'Edit Parent' : 'Add New Parent'}</Text>
-            <TextInput
-              placeholder="First Name"
-              value={newParent.firstname}
-              onChangeText={(text) => setNewParent({ ...newParent, firstname: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="Last Name"
-              value={newParent.lastname}
-              onChangeText={(text) => setNewParent({ ...newParent, lastname: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="Email"
-              value={newParent.email}
-              onChangeText={(text) => setNewParent({ ...newParent, email: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="Address"
-              value={newParent.address}
-              onChangeText={(text) => setNewParent({ ...newParent, address: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="Username"
-              value={newParent.username}
-              onChangeText={(text) => setNewParent({ ...newParent, username: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="Password"
-              value={newParent.password}
-              onChangeText={(text) => setNewParent({ ...newParent, password: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-              secureTextEntry
-            />
-            <TextInput
-              placeholder="Mobile Number"
-              value={newParent.mobileNumber}
-              onChangeText={(text) => setNewParent({ ...newParent, mobileNumber: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-            <TextInput
-              placeholder="National ID"
-              value={newParent.nationalId}
-              onChangeText={(text) => setNewParent({ ...newParent, nationalId: text })}
-              className="border border-gray-400 p-2 rounded mb-2"
-            />
-
-            <TouchableOpacity onPress={() => setShowDatePicker(true)}>
-              <Text className="border border-gray-400 p-2 rounded mb-2">
-                {newParent.dateOfBirth.toLocaleDateString() || "Select Date of Birth"}
-              </Text>
-            </TouchableOpacity>
-
-            {showDatePicker && (
-              <DateTimePicker
-                value={newParent.dateOfBirth}
-                mode="date"
-                display="default"
-                onChange={(event, date) => {
-                  if (date) {
-                    setNewParent({ ...newParent, dateOfBirth: date });
-                  }
-                  setShowDatePicker(false);
-                }}
-              />
-            )}
-
-            <Button 
-              title={isEditing ? 'Update Parent' : 'Add Parent'} 
-              onPress={isEditing ? editParent : addParent} 
-            />
-            <Button title="Cancel" onPress={() => resetForm()} />
-          </View>
-        </View>
-      </Modal>
-    </View>
+        <TouchableOpacity
+          className="bg-blue-500 p-2 rounded-md mt-4"
+          onPress={currentParent ? handleEditParent : handleCreateParent}
+        >
+          <Text className="text-white text-center">{currentParent ? 'Update Parent' : 'Create Parent'}</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
   );
 };
 
-const styles = StyleSheet.create({
-  modalBackground: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-  },
-});
-
 export default ParentManagement;
 
+const styles = StyleSheet.create({
+  // You can add styles here
+});

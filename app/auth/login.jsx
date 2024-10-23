@@ -3,15 +3,39 @@ import { View, Text, TextInput, TouchableOpacity, Alert, Image } from 'react-nat
 import { Link, Stack, useRouter } from 'expo-router';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import * as SecureStore from 'expo-secure-store';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 
 const Index = () => {
+  const { showActionSheetWithOptions } = useActionSheet();
+
   const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
-  const [email, setEmail] = useState('admin@gmail.com');
+  const [email, setEmail] = useState('parent@gmail.com');
   const [password, setPassword] = useState('admin');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+
+
+  const openActionSheet = () => {
+    const options = ['Forgot Password','Contact', 'Cancel'];
+    const destructiveButtonIndex = 2;
+    const cancelButtonIndex = 2;
+
+    showActionSheetWithOptions({
+      options,
+      destructiveButtonIndex,
+    },
+    (buttonIndex) => {
+      if(buttonIndex === 0) {
+        router.push('/forgot-password');
+      }
+      if(buttonIndex === 1) {
+        // WebBrowser.openBrowserAsync('https://www.google.com');
+      }
+    })
+  
+  }
 
   const validateInputs = () => {
     let isValid = true;
@@ -65,6 +89,9 @@ const Index = () => {
         }
         if(result.role[0] === 'TEACHER') {
           router.replace('/(teacher)/');
+        }
+        if(result.role[0] === 'PARENT') {
+          router.replace('/parent/');
         }
       } else {
         Alert.alert('Login Failed', result.message || 'Something went wrong');
@@ -159,6 +186,14 @@ const Index = () => {
           <Link href="/signup" className="text-center text-gray-800 text-md">
             Don’t have an account? Sign up
           </Link>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={()=>
+          openActionSheet()
+        } className="mt-4">
+            <Text className="text-center text-gray-400 text-md">
+            Can’t Login?
+              </Text>
         </TouchableOpacity>
       </View>
     </View>

@@ -3,6 +3,8 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import apiClient from '../../utils/apiClient';
+import * as SecureStore from 'expo-secure-store';
+
 
 const ChildCard = ({ name, onPress, isSelected }) => {
   return (

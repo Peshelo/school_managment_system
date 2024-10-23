@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import apiClient from '../../../utils/apiClient';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList } from 'react-native-gesture-handler';
 import { TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -10,7 +10,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 const Id = () => {
     const { id } = useLocalSearchParams();
     const [parent, setParent] = useState(null); // Initialize as null to handle loading state
-
+    const router = useRouter();
     const fetchParent = async () => {
         
         const token = await SecureStore.getItemAsync('token');
@@ -38,7 +38,7 @@ const Id = () => {
                     data={parent?.students}
                     keyExtractor={(item) => item.id}
                     renderItem={({ item }) => (
-                        <TouchableOpacity onPress={() => router.push(`/admin/children/${item.id}`)}>
+                        <TouchableOpacity onPress={() => router.push(`/admin/students/${item.id}`)}>
                             <View className="flex-row items-center justify-between p-2 border-b border-gray-400">
                                 <Text>{item.firstname} {item.lastname}</Text>
                                 <MaterialCommunityIcons name="chevron-right" size={24} color="black" />

@@ -1,12 +1,12 @@
 // services/AllServices.js
 import axios from 'axios';
 
-const API_URL = 'http://192.168.43.230:8080'; // Replace this with your actual API URL
+const API_URL = 'http://192.168.88.28:8080'; // Replace this with your actual API URL
 
 // Fetches all information (for teachers, classes, and students)
 export const getAllInformation = async () => {
     try {
-      const response = await fetch('http://192.168.43.230:8080/api/teacher-subject-class', {
+      const response = await fetch('http://192.168.88.28:8080/api/teacher-subject-class', {
         method: 'GET',
         headers: {
           accept: '*/*',

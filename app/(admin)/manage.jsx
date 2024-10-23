@@ -25,23 +25,23 @@ const Index = () => {
     <>
       <Stack.Screen
         options={{
-          title: "Manage",
+          title: "Management",
           headerStyle: {
-            backgroundColor: Colors.gray, // Use a gray color for the header
+            backgroundColor: Colors.primary, // Use a gray color for the header
           },
-          headerTintColor: '#000', // Dark text for header
+          headerTintColor: '#FFF', // Dark text for header
           headerTitleStyle: {
             fontWeight: 'bold',
           },
           headerShown: true,
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => router.push('/account')}
-              className="flex-row items-center p-2 bg-gray-300 mx-2 rounded-md"
-            >
-              <Icon name="user" size={20} color="black" />
-            </TouchableOpacity>
-          ),
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     onPress={() => router.push('/account')}
+          //     className="flex-row items-center p-2 bg-gray-300 mx-2 rounded-md"
+          //   >
+          //     <Icon name="user" size={20} color="black" />
+          //   </TouchableOpacity>
+          // ),
         }}
       />
       <View className="flex-1 bg-gray-100">
@@ -104,18 +104,18 @@ const Index = () => {
               icon="school"
               IconComponent={Ionicons}
               color="#f5f5f5"
-              route="/settings"
+              route="/admin/students"
             />
 
             {/* Card 7: Assign */}
-            <ActionCard
+            {/* <ActionCard
               title="Assign"
               description="Assign Teachers to classes"
               icon="school"
               IconComponent={Ionicons}
               color="#f5f5f5"
               route="/admin/assign"
-            />
+            /> */}
           </View>
         </ScrollView>
       </View>

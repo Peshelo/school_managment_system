@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../../utils/apiClient';
 
 const ChildCard = ({ name, onPress, isSelected }) => {
   return (
@@ -19,7 +20,7 @@ const ChildCard = ({ name, onPress, isSelected }) => {
         </Text>
       </View>
       <Text className="text-gray-400 mt-2 text-xs">
-        View and analyse test, exercises, and exam reports
+        View and analyze tests, exercises, and exam reports
       </Text>
     </Pressable>
   );
@@ -28,6 +29,27 @@ const ChildCard = ({ name, onPress, isSelected }) => {
 const Index = () => {
   const router = useRouter();
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [parent, setParent] = useState(null);
+  const [children, setChildren] = useState([]);
+
+  // Fetch children from the API when the component mounts
+  const fetchChildren = async () => {
+    try {
+      // Fetch children from the API
+      const response = await apiClient.get('parents/6'); // Adjust your API call as necessary
+      const { students } = response; // Destructure students from the response
+      setParent(response); // Set the fetched parent
+      setChildren(students); // Set the fetched students
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchChildren();
+  }, []);
+
+
 
   const handleChildSelect = (name) => {
     setSelectedStudent(name);
@@ -35,21 +57,19 @@ const Index = () => {
 
   const handleProceed = () => {
     if (selectedStudent) {
-      router.push('/parent/children/1');
+      router.push('/(parent)/children/1');
     }
   };
 
   return (
-    <>
+    <View className="flex-1 flex flex-col bg-gray-100 justify-center items-center">
       <Stack.Screen options={{ headerShown: false }} />
       
-      <View className="flex-1 bg-gray-100 justify-center items-center">
         {/* Header */}
-        <View className="w-full p-4 pt-10">
-          <Text className="text-3xl font-bold text-gray-800">Hi, Peshel</Text>
+        <View className="w-full flex-1 p-4 pt-10">
+          <Text className="text-3xl font-bold text-gray-800">Hi, {parent?.firstname} {parent?.lastname}</Text>
           <Text className="text-md font-bold text-gray-500">View your children's educational performance</Text>
-
-          </View>
+        </View>
 
         <Text className="my-4 text-gray-500 w-full text-center">
           Select a child to proceed
@@ -57,16 +77,14 @@ const Index = () => {
 
         <ScrollView className="w-full px-4" contentContainerStyle={{ alignItems: 'center' }}>
           {/* Child Cards */}
-          <ChildCard
-            name="Kundai Mustva"
-            onPress={() => handleChildSelect('Kundai Mustva')}
-            isSelected={selectedStudent === 'Kundai Mustva'}
-          />
-          <ChildCard
-            name="Tendai Mustva"
-            onPress={() => handleChildSelect('Tendai Mustva')}
-            isSelected={selectedStudent === 'Tendai Mustva'}
-          />
+          {children.map((child) => (
+            <ChildCard
+              key={child.id} // Add a unique key for each child
+              name={`${child.firstname} ${child.lastname}`} // Combine first and last names
+              onPress={() => handleChildSelect(`${child.firstname} ${child.lastname}`)} // Pass full name on select
+              isSelected={selectedStudent === `${child.firstname} ${child.lastname}`}
+            />
+          ))}
 
           {/* Proceed Button */}
           <Pressable
@@ -74,9 +92,9 @@ const Index = () => {
             disabled={!selectedStudent}
             style={{
               opacity: selectedStudent ? 1 : 0.5,
-              textAlign: 'center', // Ensure the text is centered
-              alignItems: 'center', // Center content horizontally
-              justifyContent: 'center', // Center content vertically
+              textAlign: 'center',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
             className={`mt-4 px-8 py-4 w-full rounded-xl ${
               selectedStudent ? 'bg-blue-600' : 'bg-gray-400'
@@ -86,7 +104,6 @@ const Index = () => {
           </Pressable>
         </ScrollView>
       </View>
-    </>
   );
 };
 

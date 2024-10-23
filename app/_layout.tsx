@@ -1,44 +1,50 @@
 import { Colors } from "@/constants/Colors";
 import { Stack } from "expo-router";
+import { SafeAreaView, Text } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { ActionSheetProvider } from "@expo/react-native-action-sheet";
+import React from "react";
 
+const InitialLayout = () => {
+  return (
+    <Stack
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: Colors.primary,
+        },
+        headerTintColor: "white",
+        headerTitleStyle: {
+          fontWeight: "bold",
+        },
+        headerShown:false
+      }}
+    >
+      <Stack.Screen name="(admin)" options={{ headerShown: false }} />
+
+      
+
+      <Stack.Screen name="(teacher)" options={{ title: "Teacher Portal" }} />
+      {/* <Stack.Screen name="(parent)" options={{ title:"Parent Portal"}} /> */}
+
+      <Stack.Screen
+        name="parent/children/[id]"
+        options={{ headerShown: true }}
+      />
+      <Stack.Screen name="(parent)" options={{ headerShown: false }} />
+
+      <Stack.Screen name="+not-found" />
+    </Stack>
+  );
+};
 export default function RootLayout() {
   return (
-    
-    <Stack screenOptions={{
-      headerStyle: {
-        backgroundColor: Colors.primary,
-      },
-      headerTintColor: "white",
-      headerTitleStyle: {
-        fontWeight: 'bold',
-      },
-    }}>
-          <Stack.Screen name="(admin)" options={{ headerShown: false }} />
-
-         <Stack.Screen name="admin/school/index" options={{ title:"School Details" }} />
-         <Stack.Screen name="admin/teachers/index" options={{ title:"Manage Teachers"}} />
-         <Stack.Screen name="admin/subjects/index" options={{ title:"Manage Subjects"}} />
-
-         <Stack.Screen name="admin/classes/index" options={{ title:"Manage Classes"}} />
-         <Stack.Screen name="admin/parents/index" options={{ title:"Manage Parents"}} />
-
-
-
-
-         <Stack.Screen name="(teacher)" options={{ title:"Teacher Portal"}} />
-         {/* <Stack.Screen name="(parent)" options={{ title:"Parent Portal"}} /> */}
-
-
-         <Stack.Screen name="parent/children/[id]" options={{headerShown:true}} />
-         <Stack.Screen name="(parent)" options={{headerShown:false}} />
-
-
-
-
-
-
-         <Stack.Screen name="+not-found" />
-
-    </Stack>
+    <ActionSheetProvider>
+      <>
+       <GestureHandlerRootView style={{ flex: 1 }}>
+        <InitialLayout />
+      </GestureHandlerRootView>
+      </>
+     
+    </ActionSheetProvider>
   );
 }

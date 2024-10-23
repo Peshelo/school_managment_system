@@ -1,69 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, Text, View, TextInput, Button, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
-import TopNavBar from '@/components/navigation/TopNavBar';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../../../utils/apiClient';
+import { Stack, useRouter } from 'expo-router';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 
 const ManageSubjects = () => {
     const [subjects, setSubjects] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
     const [modalVisible, setModalVisible] = useState(false);
     const [currentSubject, setCurrentSubject] = useState(null);
     const [newSubject, setNewSubject] = useState({ name: '', description: '' });
-    const token = SecureStore.getItemAsync('token');
+    const router = useRouter();
+    const { showActionSheetWithOptions } = useActionSheet();
 
     useEffect(() => {
         fetchSubjects();
     }, []);
 
     const fetchSubjects = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
         try {
-            const response = await axios.get('http://192.168.43.230:8080/api/subjects', {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
-            setSubjects(response.data);
+            const response = await apiClient.getAuthorized('subjects', token);
+            setSubjects(response);
         } catch (error) {
             console.error(error);
-        }
-    };
-
-    const handleSearch = () => {
-        if (searchTerm) {
-            const filteredSubjects = subjects.filter(sub =>
-                sub.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            setSubjects(filteredSubjects);
-        } else {
-            fetchSubjects(); // Reset to original list if search term is cleared
-        }
-    };
-
-    const handleCreateSubject = async () => {
-        try {
-            await axios.post('http://192.168.43.230:8080/api/subjects', newSubject, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
-            Alert.alert('Success', 'Subject created successfully!');
-            fetchSubjects();
-            setModalVisible(false);
-            setNewSubject({ name: '', description: '' });
-        } catch (error) {
-            console.error(error);
-            Alert.alert('Error', 'Failed to create subject.');
         }
     };
 
     const handleDeleteSubject = async (subjectId) => {
+        const token = await SecureStore.getItemAsync('token');
+
         try {
-            await axios.delete(`http://192.168.43.230:8080/api/subjects/${subjectId}`, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
+            await apiClient.delete(`subjects/${subjectId}`, token);
             Alert.alert('Success', 'Subject deleted successfully!');
             fetchSubjects();
         } catch (error) {
@@ -72,13 +43,26 @@ const ManageSubjects = () => {
         }
     };
 
-    const handleEditSubject = async () => {
+    const handleCreateSubject = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
         try {
-            await axios.put(`http://192.168.43.230:8080/api/subjects/${currentSubject.id}`, currentSubject, {
-                headers: {
-                    "Authorization": `Bearer ${await token}`
-                }
-            });
+            await apiClient.post('subjects', newSubject, token);
+            Alert.alert('Success', 'Subject created successfully!');
+            fetchSubjects();
+            setModalVisible(false);
+            resetForm();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create subject.');
+        }
+    };
+
+    const handleEditSubject = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.put(`subjects/${currentSubject.id}`, currentSubject, token);
             Alert.alert('Success', 'Subject updated successfully!');
             fetchSubjects();
             setModalVisible(false);
@@ -89,88 +73,166 @@ const ManageSubjects = () => {
         }
     };
 
+    const resetForm = () => {
+        setNewSubject({ name: '', description: '' });
+    };
+
+    const openActionSheet = (subjectItem) => {
+        setCurrentSubject(subjectItem);
+        const options = ['View', 'Edit', 'Delete', 'Cancel'];
+        const destructiveButtonIndex = 2;
+        const cancelButtonIndex = 3;
+
+        showActionSheetWithOptions({
+            options,
+            title: 'Subject Actions',
+            destructiveButtonIndex,
+            cancelButtonIndex,
+        },
+        (buttonIndex) => {
+            if (buttonIndex === 0) {
+                router.push(`/admin/subjects/${subjectItem.id}`); // Redirect to subject details
+            }
+            if (buttonIndex === 1) {
+                setModalVisible(true);
+            }
+            if (buttonIndex === 2) {
+                handleDeleteSubject(subjectItem.id);
+            }
+        });
+    };
+
+    const renderSubjectItem = ({ item }) => (
+        <TouchableOpacity onPress={() => openActionSheet(item)} className="border-b border-gray-300 mx-1 rounded-md p-4 flex-row items-center">
+            <View className="flex-1">
+                <Text className="font-bold">{item.name}</Text>
+                <Text>{item.description}</Text>
+            </View>
+            <TouchableOpacity className="flex-row">
+                <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
+            </TouchableOpacity>
+        </TouchableOpacity>
+    );
+
     return (
         <View className="flex-1 bg-white">
-            <View className="p-4">
-                <Text className="text-xl font-bold mb-4">Manage Subjects</Text>
-
-                <View className="mb-4 flex-row">
-                    <TextInput
-                        className="border border-gray-300 p-2 rounded-md flex-1"
-                        placeholder="Search Subjects"
-                        value={searchTerm}
-                        onChangeText={setSearchTerm}
-                    />
-                    <TouchableOpacity onPress={handleSearch} className="ml-2 bg-gray-700 p-2 rounded-md">
-                        <Text className="text-white">Search</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <FlatList
-                    data={subjects}
-                    keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item,index }) => (
-                        <View className="border-b border-gray-300 p-4 flex-row justify-between items-center">
-
-                            <View className="flex-1">
-                                <Text className="font-bold">{index+1}. {item.name}</Text>
-                                <Text>{item.description}</Text>
-                            </View>
-                            <View className="flex-row">
-                                <TouchableOpacity onPress={() => { setCurrentSubject(item); setModalVisible(true); }} className="p-2 rounded-md mr-2">
-                                    <Text className="text-blue-500">Edit</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={() => handleDeleteSubject(item.id)} className="p-2 rounded-md">
-                                    <Text className="text-red-500">Delete</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    )}
-                />
-
-                <TouchableOpacity onPress={() => setModalVisible(true)} className="bg-green-500 p-3 rounded-md mt-4">
-                    <Text className="text-white text-center">Create Subject</Text>
-                </TouchableOpacity>
-
-                {/* Modal for Adding/Editing Subject */}
-                <Modal visible={modalVisible} animationType="slide">
-                    <View className="p-4">
-                        <Text className="text-xl font-bold mb-4 text-center">
-                            {currentSubject ? 'Edit Subject' : 'Create Subject'}
-                        </Text>
-
-                        <TextInput
-                            className="border border-gray-300 p-2 mb-2 rounded-md"
-                            placeholder="Subject Name"
-                            value={currentSubject ? currentSubject.name : newSubject.name}
-                            onChangeText={(text) => currentSubject ? setCurrentSubject({ ...currentSubject, name: text }) : setNewSubject({ ...newSubject, name: text })}
-                        />
-                        <TextInput
-                            className="border border-gray-300 p-2 mb-4 rounded-md"
-                            placeholder="Subject Description"
-                            value={currentSubject ? currentSubject.description : newSubject.description}
-                            onChangeText={(text) => currentSubject ? setCurrentSubject({ ...currentSubject, description: text }) : setNewSubject({ ...newSubject, description: text })}
-                        />
-
-                        <TouchableOpacity
-                            onPress={currentSubject ? handleEditSubject : handleCreateSubject}
-                            className="bg-gray-700 p-3 rounded-md mb-4"
-                        >
-                            <Text className="text-white text-center">{currentSubject ? 'Update Subject' : 'Create Subject'}</Text>
+            <Stack.Screen
+                options={{
+                    title: "Manage Subjects",
+                    headerBackVisible: false,
+                    headerRight: () => (
+                        <TouchableOpacity onPress={() => setModalVisible(true)} className="p-2 rounded-md">
+                            <MaterialCommunityIcons name="plus-box" size={24} color="white" />
                         </TouchableOpacity>
+                    ),
+                }}
+            />
 
-                        <TouchableOpacity onPress={() => setModalVisible(false)} className="bg-red-500 p-3 rounded-md">
-                            <Text className="text-white text-center">Cancel</Text>
-                        </TouchableOpacity>
-                    </View>
-                </Modal>
-            </View>
+            <FlatList
+                data={subjects}
+                keyExtractor={(item) => item.id.toString()}
+                renderItem={renderSubjectItem}
+                contentContainerStyle={{ paddingBottom: 80 }}
+                showsVerticalScrollIndicator={false}
+            />
+
+            {/* Modal for Adding/Editing Subject */}
+            <AddSubjectModal
+                visible={modalVisible}
+                onClose={() => { setCurrentSubject(null); setModalVisible(false); }}
+                currentSubject={currentSubject}
+                setCurrentSubject={(values) => setCurrentSubject(values)}
+                refresh={fetchSubjects}
+            />
         </View>
     );
 };
 
-const styles = StyleSheet.create({
-    // Add any custom styles here
-});
+const AddSubjectModal = ({ visible, onClose, currentSubject, setCurrentSubject, refresh }) => {
+    const [newSubject, setNewSubject] = useState({
+        name: '',
+        description: '',
+    });
+
+    const resetForm = () => {
+        setNewSubject({
+            name: '',
+            description: '',
+        });
+    };
+
+    useEffect(() => {
+        if (currentSubject) {
+            setNewSubject({ name: currentSubject.name, description: currentSubject.description });
+        } else {
+            resetForm();
+        }
+    }, [currentSubject]);
+
+    const handleSubmit = async () => {
+        if (currentSubject) {
+            await handleEditSubject();
+        } else {
+            await handleCreateSubject();
+        }
+    };
+
+    const handleEditSubject = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.put(`subjects/${currentSubject.id}`, newSubject, token);
+            Alert.alert('Success', 'Subject updated successfully!');
+            refresh();
+            onClose();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to update subject.');
+        }
+    };
+
+    const handleCreateSubject = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.post('subjects', newSubject, token);
+            Alert.alert('Success', 'Subject created successfully!');
+            refresh();
+            onClose();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create subject.');
+        }
+    };
+
+    return (
+        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+            <View className="flex flex-row justify-between p-4 items-center">
+                <Text className="text-xl font-bold text-center">{currentSubject ? 'Edit Subject' : 'Create Subject'}</Text>
+                <TouchableOpacity className="text-center" onPress={onClose}>
+                    <MaterialCommunityIcons name="close" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <View className="p-4">
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Subject Name"
+                    value={newSubject.name}
+                    onChangeText={(text) => setNewSubject({ ...newSubject, name: text })}
+                />
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Subject Description"
+                    value={newSubject.description}
+                    onChangeText={(text) => setNewSubject({ ...newSubject, description: text })}
+                />
+                <TouchableOpacity className="my-2 w-full bg-blue-500 rounded-lg p-4" onPress={handleSubmit}>
+                    <Text className="w-full text-center text-semibold text-white">{currentSubject ? 'Update Subject' : 'Create Subject'}</Text>
+                </TouchableOpacity>
+            </View>
+        </Modal>
+    );
+};
 
 export default ManageSubjects;

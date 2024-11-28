@@ -1,129 +1,228 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, FlatList, TouchableOpacity, Modal, Button, ScrollView } from 'react-native';
-import { getAllInformation } from '../../teacher-services/Class-service'; // Assuming similar service file
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, FlatList, Modal } from 'react-native';
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../../../utils/apiClient';
+import { Stack, useRouter } from 'expo-router';
+import { useActionSheet } from '@expo/react-native-action-sheet';
 
 
-const Classes = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [info, setInfo] = useState([]);
-  const [classStudentMap, setClassStudentMap] = useState({});
-  const [teacherClassSubjectMap, setTeacherClassSubjectMap] = useState({});
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedClass, setSelectedClass] = useState(null);
+const ManageClasses = () => {
+    const [classes, setClasses] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [currentClass, setCurrentClass] = useState(null);
+    const router = useRouter();
+    const [newClass, setNewClass] = useState({
+        name: '',
+        description: '',
+        academicYearId: 1,
+        schoolId: 1
+    });
+    const { showActionSheetWithOptions } = useActionSheet();
 
-  useEffect(() => {
-    getAllInfo();
-  }, []);
 
-  const getAllInfo = async () => {
-    setIsLoading(true);
-    setInfo([]);
-    setClassStudentMap({});
-    setTeacherClassSubjectMap({});
+    useEffect(() => {
+        fetchClasses();
+    }, []);
 
-    try {
-      const apiResponse = await getAllInformation();
+    const fetchClasses = async () => {
+        const token = await SecureStore.getItemAsync('token');
 
-      if (apiResponse.data && apiResponse.data.length > 0) {
-        const teacherMap = {};
-        const classMap = {};
+        try {
+            const response = await apiClient.getAuthorized('teachers/me', token);
+            setClasses(response?.teacherSubjectClasses);
+        } catch (error) {
+            console.error(error);
+        }
+    };
 
-        apiResponse.data.forEach(entry => {
-          const teacherName = `${entry.teacher.firstname} ${entry.teacher.lastname}`;
-          const className = entry.schoolClass.name;
-          const subjectName = entry.subject.name;
-          const students = entry.schoolClass.students || [];
+    const handleDeleteClass = async (classId) => {
+        const token = await SecureStore.getItemAsync('token');
 
-          if (!teacherMap[teacherName]) {
-            teacherMap[teacherName] = {};
-          }
+        try {
+            await apiClient.delete(`classes/${classId}`, token);
+            Alert.alert('Success', 'Class deleted successfully!');
+            fetchClasses();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to delete class.');
+        }
+    };
 
-          if (!teacherMap[teacherName][className]) {
-            teacherMap[teacherName][className] = [];
-          }
+    const handleCreateClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
 
-          if (!teacherMap[teacherName][className].includes(subjectName)) {
-            teacherMap[teacherName][className].push(subjectName);
-          }
+        try {
+            await apiClient.post('classes', newClass, token);
+            Alert.alert('Success', 'Class created successfully!');
+            fetchClasses();
+            setModalVisible(false);
+            resetForm();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create class.');
+        }
+    };
 
-          if (!classMap[className]) {
-            classMap[className] = [];
-          }
-
-          students.forEach(student => {
-            const studentName = `${student.firstname} ${student.lastname}`;
-            if (!classMap[className].includes(studentName)) {
-              classMap[className].push(studentName);
-            }
-          });
+    const resetForm = () => {
+        setNewClass({
+            name: '',
+            description: '',
+            academicYearId: 1,
+            schoolId: 1
         });
+    };
 
-        setTeacherClassSubjectMap(teacherMap);
-        setClassStudentMap(classMap);
-      }
-    } catch (e) {
-      console.error('Error fetching information: ', e);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const renderClassItem = ({ item }) => (
+        <TouchableOpacity onPress={() => console.log("Open Class Profile")} className="border-b border-gray-300 mx-1 rounded-md p-4 flex-row items-center">
+            <View className="flex-1">
+                <Text className="font-bold">{item?.schoolClass?.name}</Text>
+               {item?.schoolClass?.description ? <Text>{item?.schoolClass?.description}</Text> : ''} 
+            </View>
+            <TouchableOpacity onPress={() => openActionSheet(item)} className="flex-row">
+                <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
+            </TouchableOpacity>
+        </TouchableOpacity>
+    );
 
-  const handleModalOpen = className => {
-    setSelectedClass(className);
-    setModalVisible(true);
-  };
+    const openActionSheet = (classItem) => {
+        setCurrentClass(classItem);
+        const options = ['View', 'Edit', 'Delete', 'Cancel'];
+        const destructiveButtonIndex = 2;
+        const cancelButtonIndex = 3;
 
-  const renderModalContent = () => {
-    const students = classStudentMap[selectedClass] || [];
+        showActionSheetWithOptions({
+            options,
+            title: 'Class Actions',
+            destructiveButtonIndex,
+            cancelButtonIndex,
+        },
+        (buttonIndex) => {
+            if (buttonIndex === 0) {
+                router.push(`/teacher/classes/${classItem.id}`);
+            }
+            if (buttonIndex === 1) {
+                setCurrentClass(classItem);
+                setModalVisible(true);
+            }
+            if (buttonIndex === 2) {
+                handleDeleteClass(classItem.id);
+            }
+        });
+    };
 
     return (
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Students in {selectedClass}</Text>
-          <Text>Count: {students.length}</Text>
-          <ScrollView style={{ marginTop: 16 }}>
-            {students.length > 0 ? (
-              students.map((student, index) => (
-                <View key={index} style={{ padding: 8, marginVertical: 4 }}>
-                  <Text>{student}</Text>
-                </View>
-              ))
-            ) : (
-              <Text>No students found for this class.</Text>
-            )}
-          </ScrollView>
-          <Button title="Close" onPress={() => setModalVisible(false)} />
+        <View className="flex-1 bg-white">
+            <Stack.Screen
+                options={{
+                    title: "Manage Classes",
+                    headerBackVisible: true,
+                    headerRight: () => (
+                        <TouchableOpacity onPress={() => setModalVisible(false)} className="p-2 rounded-md">
+                            <MaterialCommunityIcons name="note-edit" size={24} color="white" />
+                        </TouchableOpacity>
+                    ),
+                }}
+            />
+             <FlatList
+             data={classes}
+             keyExtractor={(item) => item.id.toString()}
+             renderItem={renderClassItem}
+             contentContainerStyle={{ paddingBottom: 80 }}
+             showsVerticalScrollIndicator={false}
+             ListEmptyComponent={<Text className="text-md my-4 w-full text-center">No classes available</Text>}
+         />
+
+           
+
+            {/* Modal for Adding/Editing Class */}
+            <AddClassModal
+                visible={modalVisible}
+                onClose={() => { setCurrentClass(null); setModalVisible(false); }}
+                currentClass={currentClass}
+                setCurrentClass={(values) => setCurrentClass(values)}
+                refresh={fetchClasses}
+            />
         </View>
-      </Modal>
     );
-  };
-
-  const teacherName = 'Ruramai Botso'; // Example teacher name
-
-  return (
-    <View style={{ flex: 1, padding: 16 }}>
-      {isLoading ? (
-        <ActivityIndicator size="large" />
-      ) : teacherClassSubjectMap[teacherName] ? (
-        <FlatList
-          data={Object.keys(teacherClassSubjectMap[teacherName])}
-          keyExtractor={(item) => item}
-          renderItem={({ item: className }) => (
-            <View style={{ padding: 16, marginVertical: 8, backgroundColor: '#f0f8ff', borderRadius: 20 }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Class: {className}</Text>
-            </View>
-          )}
-        />
-      ) : (
-        <Text>No classes found</Text>
-      )}
-      {renderModalContent()}
-    </View>
-  );
 };
 
-export default Classes;
+const AddClassModal = ({ visible, onClose, currentClass, setCurrentClass, refresh }) => {
+
+    const handleEditClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.put(`classes/${currentClass.id}`, currentClass, token);
+            Alert.alert('Success', 'Class updated successfully!');
+            refresh();
+            onClose();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to update class.');
+        }
+    };
+
+    const [newClass, setNewClass] = useState({
+        name: '',
+        description: '',
+        academicYearId: 1,
+        schoolId: 1,
+    });
+
+    const handleCreateClass = async () => {
+        const token = await SecureStore.getItemAsync('token');
+
+        try {
+            await apiClient.post('classes', newClass, token);
+            Alert.alert('Success', 'Class created successfully!');
+            refresh();
+            onClose();
+            resetForm();
+        } catch (error) {
+            console.error(error);
+            Alert.alert('Error', 'Failed to create class.');
+        }
+    };
+
+    const resetForm = () => {
+        setNewClass({
+            name: '',
+            description: '',
+            academicYearId: 1,
+            schoolId: 1,
+        });
+    };
+
+    return (
+        <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+            <View className="flex flex-row justify-between p-4 items-center">
+                <Text className="text-xl font-bold text-center">{currentClass ? 'Edit Class' : 'Create Class'}</Text>
+                <TouchableOpacity className="text-center" onPress={onClose}>
+                    <MaterialCommunityIcons name="close" size={24} color="black" />
+                </TouchableOpacity>
+            </View>
+
+            <View className="p-4">
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Class Name"
+                    value={currentClass ? currentClass.name : newClass.name}
+                    onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, name: text }) : setNewClass({ ...newClass, name: text })}
+                />
+                <TextInput
+                    className="border border-gray-300 p-2 mb-2 rounded-md"
+                    placeholder="Class Description"
+                    value={currentClass ? currentClass.description : newClass.description}
+                    onChangeText={(text) => currentClass ? setCurrentClass({ ...currentClass, description: text }) : setNewClass({ ...newClass, description: text })}
+                />
+                <TouchableOpacity className="my-2 w-full bg-blue-500 rounded-lg p-4" onPress={currentClass ? handleEditClass : handleCreateClass}>
+                    <Text className="w-full text-center text-semibold text-white">{currentClass ? 'Update Class' : 'Create Class'}</Text>
+                </TouchableOpacity>
+            </View>
+        </Modal>
+    );
+};
+
+export default ManageClasses;

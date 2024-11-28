@@ -24,7 +24,7 @@ export default function TabLayout() {
         }}
       />
        <Tabs.Screen
-        name="account"
+        name="manage"
         options={{
             headerShown: false,
           title: 'Manage',

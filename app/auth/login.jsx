@@ -9,8 +9,8 @@ const Index = () => {
   const { showActionSheetWithOptions } = useActionSheet();
 
   const BASE_URL = process.env.EXPO_PUBLIC_BASE_URL;
-  const [email, setEmail] = useState('parent@gmail.com');
-  const [password, setPassword] = useState('admin');
+  const [email, setEmail] = useState('string@gmail.com');
+  const [password, setPassword] = useState('string');
   const [emailError, setEmailError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);

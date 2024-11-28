@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Link, Stack, useRouter } from 'expo-router';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import apiClient from '../../utils/apiClient';
 
@@ -102,6 +102,7 @@ const Index = () => {
           >
             <Text className="text-white font-bold text-center">Proceed</Text>
           </Pressable>
+
         </ScrollView>
       </View>
   );

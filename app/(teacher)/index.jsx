@@ -1,75 +1,86 @@
-import React from 'react';
-import { ScrollView, View, Text, TouchableOpacity } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import { Link, Stack } from 'expo-router';
-import { useRouter } from 'expo-router';
-import TopNavBar from '../../components/navigation/TopNavBar';
-import { Feather, FontAwesome, FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+// pages/teacher/index.js
+import React, { useEffect, useState } from 'react';
+import { ScrollView, View, Text, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
+import apiClient from '../../utils/apiClient';
+import * as SecureStore from 'expo-secure-store';
+import { Colors } from '../../constants/Colors';
+
 
 const Index = () => {
   const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [profile, setProfile] = useState(null);
+  const [loading, setLoading] = useState(true); // Track loading state
 
-  // Sample function for handling log out (placeholder)
+  // Function to handle search query
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    // Implement search logic here, e.g., filter classes or subjects
+  };
 
+  const fetchProfile = async () => {
+    const token = await SecureStore.getItemAsync('token');
+    try {
+      const data = await apiClient.getAuthorized('teachers/me', token); // Await the API call
+      console.log(data);
+      setProfile(data);
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setProfile(null); // Set profile to null if error occurs
+    } finally {
+      setLoading(false); // Set loading to false once data is fetched
+    }
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-100">
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
 
   return (
     <>
-    <Stack.Screen options={{title:"Welcome Teacher"}}/>
-    <View className="flex-1 bg-gray-100">
-      {/* Top Nav Bar */}
-      {/* <TopNavBar/> */}
-      {/* <View className="bg-white rounded-lg p-4 mb-4">
-          <Text className="text-2xl font-bold text-gray-800">Welcome, Teacher!</Text>
-          <Text className="text-gray-600">Manage the your classes, subjects and more.</Text>
+          <Stack.Screen
+        options={{
+          title: "Home",
+          headerStyle: {
+            backgroundColor: Colors.primary, // Use a gray color for the header
+          },
+          headerTintColor: '#FFF', // Dark text for header
+          headerTitleStyle: {
+            fontWeight: 'bold',
+          },
+          headerShown: true,
+      
+        }}
+      />
+      <View className="flex-1 bg-gray-100">
+        {/* Top Nav Bar */}
+        <View className="bg-white p-4">
+          <Text className="text-2xl font-bold text-gray-800">Hi, {profile?.firstname || 'Teacher'}</Text>
+          <Text className="text-gray-600">Manage your classes, subjects, and more.</Text>
+        </View>
+
+        {/* Search Bar */}
+        {/* <View className="p-4">
+          <TextInput
+            placeholder="Search..."
+            value={searchQuery}
+            onChangeText={handleSearch}
+            className="bg-white p-3 rounded-lg border border-gray-400"
+          />
         </View> */}
 
-      {/* Main Content */}
-      <ScrollView className="flex-1 p-4">
-        {/* Welcome Section */}
-     
-
-        {/* Action Cards */}
-        <View className="flex-row flex-wrap justify-between">
-          {/* Card 3: Manage Classes */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/teacher/classes')}
-          >
-<MaterialCommunityIcons name="google-classroom" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Classes</Text>
-            <Text className="text-gray-600">View and organize classes</Text>
-          </TouchableOpacity>
-          {/* Card 5: Manage Fees */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/teacher/subjects')}
-          >
-<Feather name="book-open" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Subjects</Text>
-            <Text className="text-gray-600">Track and manage school subjects</Text>
-          </TouchableOpacity>
-
-          {/* Card 6: School Settings */}
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/teacher/students')}
-          >
-<Ionicons name="school" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Students</Text>
-            <Text className="text-gray-600">Manage School students</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            className="bg-white border border-gray-400 w-[48%] p-4 rounded-lg mb-4 shadow-lg"
-            onPress={() => router.push('/teacher/schemes')}
-          >
-<Ionicons name="school" size={40} color="black" />
-            <Text className="text-xl font-bold text-gray-800 mt-2">Schemes</Text>
-            <Text className="text-gray-600">Manage your schemes</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </View>
+        {/* Main Content */}
+       
+      </View>
     </>
   );
 };

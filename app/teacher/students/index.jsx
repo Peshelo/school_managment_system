@@ -1,131 +1,141 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ActivityIndicator, FlatList, TouchableOpacity, Modal, Button, ScrollView } from 'react-native';
-import { getAllInformation } from '../../teacher-services/Class-service'; // Assuming similar service file
+import React, { useEffect, useState } from 'react';
+import { View, Text, FlatList, TouchableOpacity, Alert, TextInput, Modal, StyleSheet } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useActionSheet } from '@expo/react-native-action-sheet';
+import { Stack, useRouter } from 'expo-router';
+import apiClient from '../../../utils/apiClient'; // Create an API client
 
+const SendNoteModal = ({ visible, onClose, student, refresh }) => {
+  const [note, setNote] = useState('');
 
-const Students = () => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [info, setInfo] = useState([]);
-  const [classStudentMap, setClassStudentMap] = useState({});
-  const [teacherClassSubjectMap, setTeacherClassSubjectMap] = useState({});
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedClass, setSelectedClass] = useState(null);
-
-  useEffect(() => {
-    getAllInfo();
-  }, []);
-
-  const getAllInfo = async () => {
-    setIsLoading(true);
-    setInfo([]);
-    setClassStudentMap({});
-    setTeacherClassSubjectMap({});
-
+  const handleSendNote = async () => {
     try {
-      const apiResponse = await getAllInformation();
-
-      if (apiResponse.data && apiResponse.data.length > 0) {
-        const teacherMap = {};
-        const classMap = {};
-
-        apiResponse.data.forEach(entry => {
-          const teacherName = `${entry.teacher.firstname} ${entry.teacher.lastname}`;
-          const className = entry.schoolClass.name;
-          const subjectName = entry.subject.name;
-          const students = entry.schoolClass.students || [];
-
-          if (!teacherMap[teacherName]) {
-            teacherMap[teacherName] = {};
-          }
-
-          if (!teacherMap[teacherName][className]) {
-            teacherMap[teacherName][className] = [];
-          }
-
-          if (!teacherMap[teacherName][className].includes(subjectName)) {
-            teacherMap[teacherName][className].push(subjectName);
-          }
-
-          if (!classMap[className]) {
-            classMap[className] = [];
-          }
-
-          students.forEach(student => {
-            const studentName = `${student.firstname} ${student.lastname}`;
-            if (!classMap[className].includes(studentName)) {
-              classMap[className].push(studentName);
-            }
-          });
-        });
-
-        setTeacherClassSubjectMap(teacherMap);
-        setClassStudentMap(classMap);
-      }
-    } catch (e) {
-      console.error('Error fetching information: ', e);
-    } finally {
-      setIsLoading(false);
+      // Replace with appropriate API endpoint to send the note
+      await apiClient.post(`teachers/notes`, {
+        studentId: student.id,
+        message: note,
+      });
+      Alert.alert('Success', 'Note sent successfully!');
+      setNote('');
+      onClose();
+      refresh();
+    } catch (error) {
+      console.error(error);
+      Alert.alert('Error', 'Failed to send note.');
     }
   };
 
-  const handleModalOpen = className => {
-    setSelectedClass(className);
-    setModalVisible(true);
+  return (
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+      <View className="p-4">
+        <Text className="text-xl font-bold">Send Note to {student?.firstname} {student?.lastname}</Text>
+        <TextInput
+          className="border border-gray-300 p-2 mt-4 rounded-md"
+          placeholder="Enter your note here..."
+          value={note}
+          onChangeText={setNote}
+          multiline
+        />
+        <TouchableOpacity onPress={handleSendNote} className="bg-blue-500 p-2 mt-4 rounded-md">
+          <Text className="text-white text-center">Send Note</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={onClose} className="mt-4">
+          <Text className="text-center text-blue-500">Cancel</Text>
+        </TouchableOpacity>
+      </View>
+    </Modal>
+  );
+};
+
+const TeacherStudentManagement = () => {
+  const [students, setStudents] = useState([]);
+  const [noteModalVisible, setNoteModalVisible] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const router = useRouter();
+  const { showActionSheetWithOptions } = useActionSheet();
+
+  const fetchStudents = async () => {
+    try {
+      const response = await apiClient.get('students'); // Adjust endpoint as needed
+      setStudents(response);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const renderModalContent = () => {
-    const students = classStudentMap[selectedClass] || [];
+  useEffect(() => {
+    fetchStudents();
+  }, []);
 
-    return (
-      <Modal
-        visible={modalVisible}
-        animationType="slide"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View style={{ padding: 16 }}>
-          <Text style={{ fontSize: 18, fontWeight: 'bold' }}>Students in {selectedClass}</Text>
-          <Text>Count: {students.length}</Text>
-          <ScrollView style={{ marginTop: 16 }}>
-            {students.length > 0 ? (
-              students.map((student, index) => (
-                <View key={index} style={{ padding: 8, marginVertical: 4 }}>
-                  <Text>{student}</Text>
-                </View>
-              ))
-            ) : (
-              <Text>No students found for this class.</Text>
-            )}
-          </ScrollView>
-          <Button title="Close" onPress={() => setModalVisible(false)} />
-        </View>
-      </Modal>
+  const openActionSheet = (student) => {
+    setSelectedStudent(student);
+    const options = ['View Profile', 'View Marks', 'Send Note', 'Cancel'];
+    const cancelButtonIndex = 3;
+
+    showActionSheetWithOptions(
+      {
+        options,
+        title: `${student.firstname} ${student.lastname}`,
+        cancelButtonIndex,
+      },
+      (buttonIndex) => {
+        if (buttonIndex === 0) {
+          router.push(`/teacher/students/${student.id}`); // View Profile Route
+        }
+        if (buttonIndex === 1) {
+          router.push(`/teacher/students/${student.id}/marks`); // View Marks Route
+        }
+        if (buttonIndex === 2) {
+          setNoteModalVisible(true);
+        }
+      }
     );
   };
 
-  const teacherName = 'Ruramai Botso'; // Example teacher name
+  const renderStudentItem = ({ item }) => (
+    <TouchableOpacity
+      onPress={() => openActionSheet(item)}
+      className="border-b border-gray-300 mx-1 rounded-md p-4 flex-row items-center"
+    >
+      <View className="flex-1">
+        <Text className="font-bold">{item?.firstname} {item?.lastname}</Text>
+        <Text>{item?.email}</Text>
+      </View>
+      <MaterialCommunityIcons name="dots-vertical" size={24} color="gray" />
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      {isLoading ? (
-        <ActivityIndicator size="large" />
-      ) : teacherClassSubjectMap[teacherName] ? (
-        <FlatList
-        
-          data={Object.keys(teacherClassSubjectMap[teacherName])}
-          keyExtractor={(item) => item}
-          renderItem={({ item: className }) => (
-            <View style={{ padding: 16, marginVertical: 8, backgroundColor: '#f0f8ff', borderRadius: 20, }}>
-              <Text style={{ fontSize: 18, fontWeight: 'bold'}}>Students in : {className}</Text>
-              <Button title="View Students" onPress={() => handleModalOpen(className)} />
-            </View>
-          )}
+    <View className="flex-1 bg-white">
+      <Stack.Screen
+        options={{
+          title: "Students",
+          headerBackVisible: true,
+        }}
+      />
+      <FlatList
+        data={students}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={renderStudentItem}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        showsVerticalScrollIndicator={false}
+      />
+
+      {/* Modal for Sending Note */}
+      {selectedStudent && (
+        <SendNoteModal
+          visible={noteModalVisible}
+          onClose={() => setNoteModalVisible(false)}
+          student={selectedStudent}
+          refresh={fetchStudents}
         />
-      ) : (
-        <Text>No students found</Text>
       )}
-      {renderModalContent()}
     </View>
   );
 };
 
-export default Students;
+const styles = StyleSheet.create({
+  // Add your custom styles here if needed
+});
+
+export default TeacherStudentManagement;
